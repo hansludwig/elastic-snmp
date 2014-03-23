@@ -1,0 +1,421 @@
+ZALIO-elasticsearch-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    OBJECT-TYPE, MODULE-IDENTITY,
+    Integer32, Counter64, Gauge32
+        FROM SNMPv2-SMI
+
+    DisplayString
+        FROM SNMPv2-TC
+
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF
+
+    zalApps, zalConformance, zalCompliances, zalGroups
+        FROM ZALIO-MIB;
+
+zalElasticsearch MODULE-IDENTITY
+    LAST-UPDATED "201403170000Z"
+    ORGANIZATION "zalio AG"
+    CONTACT-INFO
+        "email:    hans.riethmann@zal.io"
+    DESCRIPTION
+        "The zalio application MIB for elasticsearch."
+
+    REVISION     "201403170000Z"
+    DESCRIPTION
+        "First version created."
+    ::= { zalConformance 22 }
+
+    zalEs             OBJECT IDENTIFIER ::= { zalApps 10 }
+    zalEsHealth       OBJECT IDENTIFIER ::= { zalEs 1 }
+    zalEsState        OBJECT IDENTIFIER ::= { zalEs 2 }
+    zalEsNode         OBJECT IDENTIFIER ::= { zalEs 3 }
+
+-- OBJECT-TYPE names are defined using mixed case, with the
+--             first letter in lowercase
+-- SEQUENCE    names are mixed case, the first letter is capitalized
+
+zalEsStateTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF ZalEsStateEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of elasticsearch cluster state entries."
+    ::= { zalEsState 1 }
+
+zalEsStateEntry OBJECT-TYPE
+    SYNTAX     ZalEsStateEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A collection of cluster relevant information
+         describing its state"
+    INDEX { zalEsStateIndex }
+    ::= { zalEsStateTable 1 }
+
+ZalEsStateEntry ::= SEQUENCE {
+    zalEsStateIndex                    Integer32,
+    zalEsClusterName                   DisplayString,
+    zalEsMaster                        DisplayString,
+    zalEsStatus                        INTEGER,
+    zalEsNrNodes                       Integer32,
+    zalEsShardsActive                  Integer32,
+    zalEsShardsReloc                   Integer32,
+    zalEsShardsInit                    Integer32,
+    zalEsShardsUnas                    Integer32,
+    zalEsShardsPrim                    Integer32
+}
+
+zalEsStateIndex OBJECT-TYPE
+    SYNTAX        Integer32 (1..255)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 1 }
+zalEsClusterName OBJECT-TYPE
+    SYNTAX        DisplayString
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 2 }
+zalEsMaster OBJECT-TYPE
+    SYNTAX        DisplayString
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 3 }
+zalEsStatus OBJECT-TYPE
+    SYNTAX        INTEGER {
+                      red(0),
+                      yellow(1),
+                      green(2)
+                  }
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 4 }
+zalEsNrNodes OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 5 }
+zalEsShardsActive OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 6 }
+zalEsShardsReloc OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 7 }
+zalEsShardsInit OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 8 }
+zalEsShardsUnas OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 9 }
+zalEsShardsPrim OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsStateEntry 10 }
+
+zalEsNodeTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF ZalEsNodeEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A list of elasticsearch cluster state entries."
+    ::= { zalEsNode 1 }
+
+zalEsNodeEntry OBJECT-TYPE
+    SYNTAX     ZalEsNodeEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        "A collection of cluster relevant information
+         describing its state"
+    INDEX { zalEsNodeIndex }
+    ::= { zalEsNodeTable 1 }
+
+ZalEsNodeEntry ::= SEQUENCE {
+    zalEsNodeIndex                     Integer32,
+    zalEsNodeName                      DisplayString,
+    zalEsStoreSize                     Counter64,
+    zalEsDocs                          Counter64,
+    zalEsIndexOps                      Counter64,
+    zalEsIndexTime                     Gauge32,
+    zalEsFlushOps                      Counter64,
+    zalEsFlushTime                     Gauge32,
+    zalEsThrottleTime                  Gauge32,
+    zalEsDeleteOps                     Counter64,
+    zalEsDeleteTime                    Gauge32,
+    zalEsGetOps                        Counter64,
+    zalEsGetTime                       Gauge32,
+    zalEsExistsOps                     Counter64,
+    zalEsExistsTime                    Gauge32,
+    zalEsMissingOps                    Counter64,
+    zalEsMissingTime                   Gauge32,
+    zalEsQueryOps                      Counter64,
+    zalEsQueryTime                     Gauge32,
+    zalEsFetchOps                      Counter64,
+    zalEsFetchTime                     Gauge32,
+    zalEsMergeOps                      Counter64,
+    zalEsMergeTime                     Gauge32,
+    zalEsRefreshOps                    Counter64,
+    zalEsRefreshTime                   Gauge32
+}
+
+zalEsNodeIndex OBJECT-TYPE
+    SYNTAX        Integer32 (1..255)
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 1 }
+zalEsNodeName OBJECT-TYPE
+    SYNTAX        DisplayString
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 2 }
+zalEsStoreSize OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 3 }
+zalEsDocs OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 4 }
+zalEsIndexOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 5 }
+zalEsIndexTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 6 }
+zalEsFlushOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 7 }
+zalEsFlushTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 8 }
+zalEsThrottleTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 9 }
+zalEsDeleteOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 10 }
+zalEsDeleteTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 11 }
+zalEsGetOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 12 }
+zalEsGetTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 13 }
+zalEsExistsOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 14 }
+zalEsExistsTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 15 }
+zalEsMissingOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 16 }
+zalEsMissingTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 17 }
+zalEsQueryOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 18 }
+zalEsQueryTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 19 }
+zalEsFetchOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 20 }
+zalEsFetchTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 21 }
+zalEsMergeOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 22 }
+zalEsMergeTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 23 }
+zalEsRefreshOps OBJECT-TYPE
+    SYNTAX        Counter64
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 24 }
+zalEsRefreshTime OBJECT-TYPE
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "to be filled in"
+    ::= { zalEsNodeEntry 25 }
+ 
+-- Compliance Statements
+zalEsCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION
+        "still finding out how this all fits together"
+    MODULE
+        GROUP zalEsGroup
+            DESCRIPTION
+                "dito"
+    ::= { zalCompliances 20 }
+
+
+zalEsGroup OBJECT-GROUP
+    OBJECTS { zalEsStateIndex,
+              zalEsClusterName,
+              zalEsMaster,
+              zalEsStatus,
+              zalEsNrNodes,
+              zalEsShardsActive,
+              zalEsShardsReloc,
+              zalEsShardsInit,
+              zalEsShardsUnas,
+              zalEsShardsPrim,
+              zalEsNodeIndex,
+              zalEsNodeName,
+              zalEsStoreSize,
+              zalEsDocs,
+              zalEsIndexOps,
+              zalEsIndexTime,
+              zalEsFlushOps,
+              zalEsFlushTime,
+              zalEsThrottleTime,
+              zalEsDeleteOps,
+              zalEsDeleteTime,
+              zalEsGetOps,
+              zalEsGetTime,
+              zalEsExistsOps,
+              zalEsExistsTime,
+              zalEsMissingOps,
+              zalEsMissingTime,
+              zalEsQueryOps,
+              zalEsQueryTime,
+              zalEsFetchOps,
+              zalEsFetchTime,
+              zalEsMergeOps,
+              zalEsMergeTime,
+              zalEsRefreshOps,
+              zalEsRefreshTime }
+    STATUS  current
+    DESCRIPTION
+            "A collection of objects providing basic instrumentation and
+            control of an elasticsearch node."
+    ::= { zalGroups 1 }
+
+END

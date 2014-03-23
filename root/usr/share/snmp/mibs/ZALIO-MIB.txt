@@ -1,0 +1,25 @@
+ZALIO-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, enterprises FROM SNMPv2-SMI;
+
+zalioMibModule MODULE-IDENTITY
+    LAST-UPDATED "201403170000Z"
+    ORGANIZATION "zalio AG"
+    CONTACT-INFO
+	"email:    hans.riethmann@zal.io"
+    DESCRIPTION
+	"The zalio enterprise MIB."
+
+    REVISION	 "201403170000Z"
+    DESCRIPTION
+        "First version created."
+    ::= { zalConformance 20 }
+
+    zalio                 OBJECT IDENTIFIER ::= { enterprises 43278 }
+    zalApps               OBJECT IDENTIFIER ::= { zalio 10 }
+    zalConformance        OBJECT IDENTIFIER ::= { zalio 20 }
+        zalCompliances    OBJECT IDENTIFIER ::= { zalConformance 9 }
+        zalGroups         OBJECT IDENTIFIER ::= { zalConformance 10 }
+
+END
