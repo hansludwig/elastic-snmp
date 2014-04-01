@@ -5,21 +5,21 @@ use vars qw($debug $debugging %conf);
 
 require "elasticsearch-snmp.conf";
 
-my $_health_ref = {};
-my $_state_ref = {};
-my $_stats_ref = {};
-my $_node_ref = {};
-my $_indices_ref = {};
-my $_time = ();
+my $health_ref = {};
+my $state_ref = {};
+my $stats_ref = {};
+my $node_ref = {};
+my $indices_ref = {};
+my $timeStmp = ();
 
 sub load_json ($$) {
   my $uri = shift;
   my $ref = shift;
 
-  printf STDERR "DEBUG %04d: %d + %d > %d, %d > %d\n", __LINE__, $_time, $conf{reload_timer}, time(), $_time + $conf{reload_timer}, time() if ( $debug );
+  printf STDERR "DEBUG %04d: %d + %d > %d, %d > %d\n", __LINE__, $timeStmp, $conf{reloadtimeStmpr}, time(), $timeStmp + $conf{reloadtimeStmpr}, time() if ( $debug );
   return() if ( %{$ref} &&
-                $_time && 
-                ($_time + $conf{reload_timer}) > time() );
+                $timeStmp && 
+                ($timeStmp + $conf{reloadtimeStmpr}) > time() );
 
   $uri = URI->new($uri);
   $uri->host($conf{url}->{host}) if ( defined($conf{url}->{host}) );
@@ -27,7 +27,7 @@ sub load_json ($$) {
 
   printf STDERR "DEBUG: reload $uri\n" if ( $debug );
   $ref = decode_json(get($uri));
-  $_time = time();
+  $timeStmp = time();
 
   return($ref);
 }
@@ -37,27 +37,27 @@ sub load_clusterHealth {
   my $ret = ();
 
   printf STDERR "DEBUG: %04d: load_clusterHealth\n", __LINE__ if ( $debug );
-  $ret = load_json($conf{url}->{cluster_health}, $_health_ref);
-  $_health_ref = $ret if ( $ret );
+  $ret = load_json($conf{url}->{cluster_health}, $health_ref);
+  $health_ref = $ret if ( $ret );
 
   # This deals with load_zalEsIndicesTable() which needs parts
   # of '_cluster/health'
   if ( $ref ) {
-    %{$ref} = %{$_health_ref};
+    %{$ref} = %{$health_ref};
     return($ref);
   }
 
-  return($_health_ref);
+  return($health_ref);
 }
 
 sub load_clusterState {
   my $ret = ();
 
   printf STDERR "DEBUG: %04d: load_clusterState\n", __LINE__ if ( $debug );
-  $ret = load_json($conf{url}->{cluster_state}, $_state_ref);
-  $_state_ref  = $ret if ( $ret );
+  $ret = load_json($conf{url}->{cluster_state}, $state_ref);
+  $state_ref  = $ret if ( $ret );
 
-  return($_state_ref);
+  return($state_ref);
 }
 
 sub load_nodeStats {
@@ -66,17 +66,17 @@ sub load_nodeStats {
   $host = (split(/\.+/, $host))[0]; # non fully qualified hostname
 
   printf STDERR "DEBUG: %04d: load_nodeStats\n", __LINE__ if ( $debug );
-  $ret = load_json($conf{url}->{node_stats}, $_stats_ref);
-  $_stats_ref  = $ret if ( $ret );
-  foreach my $n (keys(%{$_stats_ref->{nodes}})) {
-     if ( $_stats_ref->{nodes}->{$n}->{host} eq $host ) {
-        $_node_ref = $_stats_ref->{nodes}->{$n};
-        $_node_ref->{uuid} = $n;
+  $ret = load_json($conf{url}->{node_stats}, $stats_ref);
+  $stats_ref  = $ret if ( $ret );
+  foreach my $n (keys(%{$stats_ref->{nodes}})) {
+     if ( $stats_ref->{nodes}->{$n}->{host} eq $host ) {
+        $node_ref = $stats_ref->{nodes}->{$n};
+        $node_ref->{uuid} = $n;
         break;
      }
   }
 
-  return($_stats_ref);
+  return($stats_ref);
 }
 
 # -------------------------------------------------------
@@ -87,11 +87,11 @@ sub load_nodeStats {
 # -------------------------------------------------------
 sub load_zalEsIndicesTable { 
 
-  load_clusterHealth($_indices_ref);
-  $_indices_ref = $_indices_ref->{indices};
+  load_clusterHealth($indices_ref);
+  $indices_ref = $indices_ref->{indices};
   
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, load_zalEsIndicesTable if ( $debug );
-  return($_indices_ref);
+  return($indices_ref);
 }  
 # -------------------------------------------------------
 # Index validation for table zalEsIndicesTable
@@ -162,7 +162,7 @@ sub get_zalEsIndStatus {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $conf{statusnr}->{lc($_indices_ref->{stats}->{status})};
+  $ret = $conf{statusnr}->{lc($indices_ref->{stats}->{status})};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO: how to bind status to 'index'? (stats and products in our case)
   return($ret);
@@ -221,8 +221,8 @@ sub get_zalEsShrdStatus {
 
   my $status = $conf{statusnr}->{green};
   # TODO: how to bind status to 'index'? (stats and products in our case)
-  foreach my $s (keys(%{$_indices_ref->{stats}->{shards}})) {
-    my $s = $conf{statusnr}->{lc($_indices_ref->{stats}->{shards}->{$s}->{status})};
+  foreach my $s (keys(%{$indices_ref->{stats}->{shards}})) {
+    my $s = $conf{statusnr}->{lc($indices_ref->{stats}->{shards}->{$s}->{status})};
     $status = $s if ( $s > $status ); # This keeps the worst case, red above
                                       # yellow and yellow above green
   }
@@ -254,7 +254,7 @@ sub get_zalEsShrdActive {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $_indices_ref->{stats}->{active_shards};
+  $ret = $indices_ref->{stats}->{active_shards};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO:
   return($ret);
@@ -282,7 +282,7 @@ sub get_zalEsShrdReloc {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $_indices_ref->{stats}->{relocating_shards};
+  $ret = $indices_ref->{stats}->{relocating_shards};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO:
   return($ret);
@@ -310,7 +310,7 @@ sub get_zalEsShrdInit {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $_indices_ref->{stats}->{initializing_shards};
+  $ret = $indices_ref->{stats}->{initializing_shards};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO:
   return($ret);
@@ -338,7 +338,7 @@ sub get_zalEsShrdUnas {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $_indices_ref->{stats}->{unassigned_shards};
+  $ret = $indices_ref->{stats}->{unassigned_shards};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO:
   return($ret);
@@ -366,7 +366,7 @@ sub get_zalEsShrdPrim {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $_indices_ref->{stats}->{active_primary_shards};
+  $ret = $indices_ref->{stats}->{active_primary_shards};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO:
   return($ret);
@@ -394,7 +394,7 @@ sub get_zalEsShrdRepl {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  $ret = $_indices_ref->{stats}->{number_of_replicas};
+  $ret = $indices_ref->{stats}->{number_of_replicas};
   printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO:
   return($ret);
@@ -409,7 +409,7 @@ sub get_zalEsStatus {
   my $ret = ();
 
   load_clusterHealth();
-  $ret = $conf{statusnr}->{lc($_health_ref->{status})};
+  $ret = $conf{statusnr}->{lc($health_ref->{status})};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -423,7 +423,7 @@ sub get_zalEsClusterName {
   my $ret = ();
 
   load_clusterHealth();
-  $ret = $_health_ref->{cluster_name};
+  $ret = $health_ref->{cluster_name};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -437,7 +437,7 @@ sub get_zalEsNrNodes {
   my $ret = ();
 
   load_clusterHealth();
-  $ret = $_health_ref->{number_of_nodes};
+  $ret = $health_ref->{number_of_nodes};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -451,7 +451,7 @@ sub get_zalEsNrDataNodes {
   my $ret = ();
 
   load_clusterHealth();
-  $ret = $_health_ref->{number_of_data_nodes};
+  $ret = $health_ref->{number_of_data_nodes};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -465,7 +465,7 @@ sub get_zalEsDocsCount {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{docs}->{count};
+  $ret = $node_ref->{indices}->{docs}->{count};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -479,7 +479,7 @@ sub get_zalEsDocsDel {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{docs}->{deleted};
+  $ret = $node_ref->{indices}->{docs}->{deleted};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -493,7 +493,7 @@ sub get_zalEsStoreSize {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{store}->{size_in_bytes};
+  $ret = $node_ref->{indices}->{store}->{size_in_bytes};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -507,7 +507,7 @@ sub get_zalEsStoreThr {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{store}->{throttle_time_in_millis};
+  $ret = $node_ref->{indices}->{store}->{throttle_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -522,7 +522,7 @@ sub get_zalEsMaster {
 
   load_clusterState();
   load_nodeStats();
-  $ret = $_stats_ref->{nodes}->{$_state_ref->{master_node}}->{host};
+  $ret = $stats_ref->{nodes}->{$state_ref->{master_node}}->{host};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   # TODO: should we return true or false here?
   return($ret);
@@ -537,21 +537,21 @@ sub get_zalEsNodeName {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{name};
+  $ret = $node_ref->{name};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsIndexOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.5
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsIndexOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{indexing}->{index_total};
+  $ret = $node_ref->{indices}->{indexing}->{index_total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -565,21 +565,21 @@ sub get_zalEsIndexTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{indexing}->{index_time_in_millis};
+  $ret = $node_ref->{indices}->{indexing}->{index_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsFlushOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.7
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsFlushOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{flush}->{total};
+  $ret = $node_ref->{indices}->{flush}->{total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -593,7 +593,7 @@ sub get_zalEsFlushTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{flush}->{total_time_in_millis};
+  $ret = $node_ref->{indices}->{flush}->{total_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -607,21 +607,21 @@ sub get_zalEsThrottleTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{store}->{throttle_time_in_millis};
+  $ret = $node_ref->{indices}->{store}->{throttle_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsDeleteOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.10
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsDeleteOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{indexing}->{delete_total};
+  $ret = $node_ref->{indices}->{indexing}->{delete_total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -635,21 +635,21 @@ sub get_zalEsDeleteTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{indexing}->{delete_time_in_millis};
+  $ret = $node_ref->{indices}->{indexing}->{delete_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsGetOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.12
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsGetOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{get}->{total};
+  $ret = $node_ref->{indices}->{get}->{total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -663,21 +663,21 @@ sub get_zalEsGetTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{get}->{time_in_millis};
+  $ret = $node_ref->{indices}->{get}->{time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsExistsOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.14
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsExistsOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{get}->{exists_total};
+  $ret = $node_ref->{indices}->{get}->{exists_total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -691,21 +691,21 @@ sub get_zalEsExistsTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{get}->{exists_time_in_millis};
+  $ret = $node_ref->{indices}->{get}->{exists_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsMissingOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.16
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsMissingOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{get}->{missing_total};
+  $ret = $node_ref->{indices}->{get}->{missing_total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -719,21 +719,21 @@ sub get_zalEsMissingTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{get}->{missing_time_in_millis};
+  $ret = $node_ref->{indices}->{get}->{missing_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsQueryOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.18
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsQueryOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{search}->{query_total};
+  $ret = $node_ref->{indices}->{search}->{query_total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -747,21 +747,21 @@ sub get_zalEsQueryTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{search}->{query_time_in_millis};
+  $ret = $node_ref->{indices}->{search}->{query_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsFetchOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.20
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsFetchOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{search}->{fetch_total};
+  $ret = $node_ref->{indices}->{search}->{fetch_total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -775,21 +775,21 @@ sub get_zalEsFetchTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{search}->{fetch_time_in_millis};
+  $ret = $node_ref->{indices}->{search}->{fetch_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsMergeOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.22
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsMergeOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{merges}->{total};
+  $ret = $node_ref->{indices}->{merges}->{total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -803,21 +803,21 @@ sub get_zalEsMergeTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{merges}->{total_time_in_millis};
+  $ret = $node_ref->{indices}->{merges}->{total_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
 # -------------------------------------------------------
 # Handler for scalar object zalEsRefreshOps
 # OID: .1.3.6.1.4.1.43278.10.10.2.24
-# Syntax: ASN_COUNTER64
+# Syntax: ASN_COUNTER
 # From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsRefreshOps { 
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{refresh}->{total};
+  $ret = $node_ref->{indices}->{refresh}->{total};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
@@ -831,7 +831,7 @@ sub get_zalEsRefreshTime {
   my $ret = ();
 
   load_nodeStats();
-  $ret = $_node_ref->{indices}->{refresh}->{total_time_in_millis};
+  $ret = $node_ref->{indices}->{refresh}->{total_time_in_millis};
   printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
   return($ret);
 }
