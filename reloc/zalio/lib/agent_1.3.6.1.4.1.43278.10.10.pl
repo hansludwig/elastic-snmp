@@ -7,7 +7,7 @@
 # This is intended to be used by the net-snmp agent with embedded perl
 # support. See perldoc NetSNMP::agent
 #
-# Created on Wed Mar 19 19:58:00 2014
+# Created on Tue Mar 25 19:23:00 2014
 #
 # To load this into a running agent with embedded perl support turned
 # on, simply put the following line (without the leading # mark) your
@@ -23,50 +23,62 @@
 
 use NetSNMP::agent::Support;
 use NetSNMP::ASN (':all');
+use lib (
+          "/home/hriethma/rpm/BUILD/elasticsearch-snmp/reloc/zalio/etc",
+          "/home/hriethma/rpm/BUILD/elasticsearch-snmp/reloc/zalio/lib",
+        );
 
 # Include the functions to handle the nodes
-do 'functions.pl';
+use SNMP::elasticsearch;
 
 
 # Hash for all OIDs
-my  $oidtable={
+our  $oidtable={
 # Table objects
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.2"=>{func=>\&get_zalEsClusterName,type=>ASN_OCTET_STR, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.3"=>{func=>\&get_zalEsMaster,type=>ASN_OCTET_STR, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.4"=>{func=>\&get_zalEsStatus,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.5"=>{func=>\&get_zalEsNrNodes,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.6"=>{func=>\&get_zalEsShardsActive,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.7"=>{func=>\&get_zalEsShardsReloc,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.8"=>{func=>\&get_zalEsShardsInit,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.9"=>{func=>\&get_zalEsShardsUnas,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.2.1.1.10"=>{func=>\&get_zalEsShardsPrim,type=>ASN_INTEGER, check=>\&check_zalEsStateTable, nextoid=>\&next_zalEsStateTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.2"=>{func=>\&get_zalEsNodeName,type=>ASN_OCTET_STR, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.3"=>{func=>\&get_zalEsStoreSize,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.4"=>{func=>\&get_zalEsDocs,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.5"=>{func=>\&get_zalEsIndexOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.6"=>{func=>\&get_zalEsIndexTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.7"=>{func=>\&get_zalEsFlushOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.8"=>{func=>\&get_zalEsFlushTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.9"=>{func=>\&get_zalEsThrottleTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.10"=>{func=>\&get_zalEsDeleteOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.11"=>{func=>\&get_zalEsDeleteTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.12"=>{func=>\&get_zalEsGetOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.13"=>{func=>\&get_zalEsGetTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.14"=>{func=>\&get_zalEsExistsOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.15"=>{func=>\&get_zalEsExistsTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.16"=>{func=>\&get_zalEsMissingOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.17"=>{func=>\&get_zalEsMissingTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.18"=>{func=>\&get_zalEsQueryOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.19"=>{func=>\&get_zalEsQueryTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.20"=>{func=>\&get_zalEsFetchOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.21"=>{func=>\&get_zalEsFetchTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.22"=>{func=>\&get_zalEsMergeOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.23"=>{func=>\&get_zalEsMergeTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.24"=>{func=>\&get_zalEsRefreshOps,type=>ASN_COUNTER64, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
-    ".1.3.6.1.4.1.43278.10.10.3.1.1.25"=>{func=>\&get_zalEsRefreshTime,type=>ASN_GAUGE, check=>\&check_zalEsNodeTable, nextoid=>\&next_zalEsNodeTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.2.0"=>{func=>\&get_zalEsIndStatus,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.3.0"=>{func=>\&get_zalEsIndName,type=>ASN_OCTET_STR, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.4.0"=>{func=>\&get_zalEsShrdStatus,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.5.0"=>{func=>\&get_zalEsShrdActive,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.6.0"=>{func=>\&get_zalEsShrdReloc,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.7.0"=>{func=>\&get_zalEsShrdInit,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.8.0"=>{func=>\&get_zalEsShrdUnas,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.9.0"=>{func=>\&get_zalEsShrdPrim,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
+    ".1.3.6.1.4.1.43278.10.10.3.1.1.10.0"=>{func=>\&get_zalEsShrdRepl,type=>ASN_INTEGER, check=>\&check_zalEsIndicesTable, nextoid=>\&next_zalEsIndicesTable, istable=>'1', next=>"", numindex=>1},
 # Scalars
+	'.1.3.6.1.4.1.43278.10.10.1.1.0'=>{func=>\&get_zalEsStatus,type=>ASN_INTEGER,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.2.0'=>{func=>\&get_zalEsClusterName,type=>ASN_OCTET_STR,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.3.0'=>{func=>\&get_zalEsNrNodes,type=>ASN_INTEGER,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.4.0'=>{func=>\&get_zalEsNrDataNodes,type=>ASN_INTEGER,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.5.0'=>{func=>\&get_zalEsDocsCount,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.6.0'=>{func=>\&get_zalEsDocsDel,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.7.0'=>{func=>\&get_zalEsStoreSize,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.8.0'=>{func=>\&get_zalEsStoreThr,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.1.9.0'=>{func=>\&get_zalEsMaster,type=>ASN_OCTET_STR,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.2.0'=>{func=>\&get_zalEsNodeName,type=>ASN_OCTET_STR,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.5.0'=>{func=>\&get_zalEsIndexOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.6.0'=>{func=>\&get_zalEsIndexTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.7.0'=>{func=>\&get_zalEsFlushOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.8.0'=>{func=>\&get_zalEsFlushTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.9.0'=>{func=>\&get_zalEsThrottleTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.10.0'=>{func=>\&get_zalEsDeleteOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.11.0'=>{func=>\&get_zalEsDeleteTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.12.0'=>{func=>\&get_zalEsGetOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.13.0'=>{func=>\&get_zalEsGetTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.14.0'=>{func=>\&get_zalEsExistsOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.15.0'=>{func=>\&get_zalEsExistsTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.16.0'=>{func=>\&get_zalEsMissingOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.17.0'=>{func=>\&get_zalEsMissingTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.18.0'=>{func=>\&get_zalEsQueryOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.19.0'=>{func=>\&get_zalEsQueryTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.20.0'=>{func=>\&get_zalEsFetchOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.21.0'=>{func=>\&get_zalEsFetchTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.22.0'=>{func=>\&get_zalEsMergeOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.23.0'=>{func=>\&get_zalEsMergeTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.24.0'=>{func=>\&get_zalEsRefreshOps,type=>ASN_COUNTER64,next=>"", numindex=>1},	
+	'.1.3.6.1.4.1.43278.10.10.2.25.0'=>{func=>\&get_zalEsRefreshTime,type=>ASN_GAUGE,next=>"", numindex=>1},	
 };
 
 # Register the top oid with the agent
+printf STDERR "DEBUG: %d: registerAgent %s\n", __LINE__, '1.3.6.1.4.1.43278.10.10';
 registerAgent($agent, '1.3.6.1.4.1.43278.10.10', $oidtable);
 

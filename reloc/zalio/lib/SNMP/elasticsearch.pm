@@ -1,294 +1,84 @@
 use LWP::Simple;
 use JSON::XS;
+use Sys::Hostname;
+use vars qw($debug $debugging %conf);
 
-do "elasticsearch-snmp.conf";
+require "elasticsearch-snmp.conf";
 
-my $_clusterTable = {};
-my $_nodeTable = {};
-my $_indicesTable = {};
+my $_health_ref = {};
+my $_state_ref = {};
+my $_stats_ref = {};
+my $_node_ref = {};
+my $_indices_ref = {};
 my $_time = ();
 
-printf STDERR "DEBUG: %s, %d: \$RealBin %s\n", __FILE__, __LINE__, $RealBin if ( $debug );
+sub load_json ($$) {
+  my $uri = shift;
+  my $ref = shift;
 
-# -------------------------------------------------------
-# Loader for table zalEsClusterTable
-# Edit this function to load the data needed for zalEsClusterTable
-# This function gets called for every request to columnar
-# data in the zalEsClusterTable table
-# -------------------------------------------------------
-sub load_zalEsClusterTable { 
-  my $uri = shift || $conf{url}->{cluster_table};
-  my $ref = shift || $_clusterTable;
-
-  return() if ( $_time && $_time + $conf{reload_timer} < time() );
+  printf STDERR "DEBUG %04d: %d + %d > %d, %d > %d\n", __LINE__, $_time, $conf{reload_timer}, time(), $_time + $conf{reload_timer}, time() if ( $debug );
+  return() if ( %{$ref} &&
+                $_time && 
+                ($_time + $conf{reload_timer}) > time() );
 
   $uri = URI->new($uri);
   $uri->host($conf{url}->{host}) if ( defined($conf{url}->{host}) );
   $uri->port($conf{url}->{port}) if ( defined($conf{url}->{port}) );
 
   printf STDERR "DEBUG: reload $uri\n" if ( $debug );
-  $_time = time();
   $ref = decode_json(get($uri));
+  $_time = time();
 
-  # ZalEsClusterEntry ::= SEQUENCE {
-  #     zalEsClusterIndex                  Integer32,     n/a
-  #     zalEsStatus                        EsStatusTC,    _cluster/health
-  #     zalEsClusterName                   DisplayString, _cluster/health
-  #     zalEsMaster                        DisplayString, "n/a"
-  #     zalEsNrNodes                       Integer32,     _cluster/health
-  #     zalEsDocsCount                     Gauge32,       _nodes/stats
-  #     zalEsDocsDel                       Gauge32,       _nodes/stats
-  #     zalEsStoreSize                     Gauge32,       _nodes/stats
-  #     zalEsStoreThr                      Gauge32        _nodes/stats
-  # }
-
-  return($ref);  
-}  
-# -------------------------------------------------------
-# Index validation for table zalEsClusterTable
-# Checks the supplied OID is in range
-# Returns 1 if it is and 0 if out of range
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub check_zalEsClusterTable {
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Check the index is in range and valid
-  return 1;
+  return($ref);
 }
 
-# -------------------------------------------------------
-# Index walker for table zalEsClusterTable
-# Given an OID for a table, returns the next OID in range, 
-# or if no more OIDs it returns 0.
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub next_zalEsClusterTable {
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+sub load_clusterHealth {
+  my $ref = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
+  printf STDERR "DEBUG: %04d: load_clusterHealth\n", __LINE__ if ( $debug );
+  $ret = load_json($conf{url}->{cluster_health}, $_health_ref);
+  $_health_ref = $ret if ( $ret );
 
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
+  # This deals with load_zalEsIndicesTable() which needs parts
+  # of '_cluster/health'
+  if ( $ref ) {
+    %{$ref} = %{$_health_ref};
+    return($ref);
+  }
 
-  # Return the next OID if there is one
-  # or return 0 if no more OIDs in this table
-  return 0;
+  return($_health_ref);
 }
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsStatus' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.2
-# Syntax: ASN_INTEGER
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsStatus { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
+sub load_clusterState {
+  my $ret = ();
 
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
+  printf STDERR "DEBUG: %04d: load_clusterState\n", __LINE__ if ( $debug );
+  $ret = load_json($conf{url}->{cluster_state}, $_state_ref);
+  $_state_ref  = $ret if ( $ret );
 
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($conf{statusnr}->{lc($_clusterTable->{status})});
+  return($_state_ref);
 }
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsClusterName' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.3
-# Syntax: ASN_OCTET_STR
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsClusterName { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-  printf STDERR "DEBUG: %s: \$oid %s
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
+sub load_nodeStats {
+  my $ret = ();
+  my $host = (defined($conf{url}->{host}) && $conf{url}->{host} ? $conf{url}->{host} : hostname());
+  $host = (split(/\.+/, $host))[0]; # non fully qualified hostname
 
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
+  printf STDERR "DEBUG: %04d: load_nodeStats\n", __LINE__ if ( $debug );
+  $ret = load_json($conf{url}->{node_stats}, $_stats_ref);
+  $_stats_ref  = $ret if ( $ret );
+  foreach my $n (keys(%{$_stats_ref->{nodes}})) {
+     if ( $_stats_ref->{nodes}->{$n}->{host} eq $host ) {
+        $_node_ref = $_stats_ref->{nodes}->{$n};
+        $_node_ref->{uuid} = $n;
+        break;
+     }
+  }
 
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_clusterTable->{cluster_name});
+  return($_stats_ref);
 }
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsMaster' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.4
-# Syntax: ASN_OCTET_STR
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsMaster { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return("foobar");
-}
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsNrNodes' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.5
-# Syntax: ASN_INTEGER
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsNrNodes { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_clusterTable->{number_of_nodes});
-}
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsDocsCount' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.6
-# Syntax: ASN_GAUGE
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsDocsCount { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Load the zalEsClusterTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_nodeTable->{indices}->{docs}->{count});
-}
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsDocsDel' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.7
-# Syntax: ASN_GAUGE
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsDocsDel { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_nodeTable->{indices}->{docs}->{deleted});
-}
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsStoreSize' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.8
-# Syntax: ASN_GAUGE
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsStoreSize { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_nodeTable->{indices}->{store}->{size_in_bytes});
-}
-# -------------------------------------------------------
-# Handler for columnar object 'zalEsStoreThr' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.1.1.9
-# Syntax: ASN_GAUGE
-# From: ZALIO-elasticsearch-MIB
-# In Table: zalEsClusterTable
-# Index: zalEsClusterIndex
-# -------------------------------------------------------
-sub get_zalEsStoreThr { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-
-  # Load the zalEsClusterTable table data
-  load_zalEsClusterTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_nodeTable->{indices}->{store}->{throttle_time_in_millis});
-}
 # -------------------------------------------------------
 # Loader for table zalEsIndicesTable
 # Edit this function to load the data needed for zalEsIndicesTable
@@ -296,28 +86,32 @@ sub get_zalEsStoreThr {
 # data in the zalEsIndicesTable table
 # -------------------------------------------------------
 sub load_zalEsIndicesTable { 
-  $_indicesTable = $_indicesTable->{indices} if
-    load_zalEsClusterTable($conf{url}->{index_table}, $_indicesTable);
+
+  load_clusterHealth($_indices_ref);
+  $_indices_ref = $_indices_ref->{indices};
+  
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, load_zalEsIndicesTable if ( $debug );
+  return($_indices_ref);
 }  
 # -------------------------------------------------------
 # Index validation for table zalEsIndicesTable
 # Checks the supplied OID is in range
 # Returns 1 if it is and 0 if out of range
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
 sub check_zalEsIndicesTable {
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
 
+  printf STDERR "DEBUG: %04d: oid %s, index %s\n", __LINE__, $oid, $idx_zalEsIndicesIndex if ( $debug );
   # Check the index is in range and valid
   return 1;
 }
@@ -327,44 +121,39 @@ sub check_zalEsIndicesTable {
 # Given an OID for a table, returns the next OID in range, 
 # or if no more OIDs it returns 0.
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
 sub next_zalEsIndicesTable {
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
 
+  printf STDERR "DEBUG: %04d: oid %s, index %s\n", __LINE__, $oid, $idx_zalEsIndicesIndex if ( $debug );
   # Return the next OID if there is one
   # or return 0 if no more OIDs in this table
   return 0;
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsIndexStatus' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.2
+# Handler for columnar object 'zalEsIndStatus' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.2
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsIndexStatus { 
+sub get_zalEsIndStatus { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -373,27 +162,26 @@ sub get_zalEsIndexStatus {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
+  $ret = $conf{statusnr}->{lc($_indices_ref->{stats}->{status})};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
   # TODO: how to bind status to 'index'? (stats and products in our case)
-  return($conf{statusnr}->{lc($_indicesTable->{stats}->{status})});
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsIndexName' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.3
+# Handler for columnar object 'zalEsIndName' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.3
 # Syntax: ASN_OCTET_STR
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsIndexName { 
+sub get_zalEsIndName { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -402,27 +190,27 @@ sub get_zalEsIndexName {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  # TODO:
-  return "stats";
+  $ret = "stats";
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO: how to bind status to 'index'? (stats and products in our case)
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsShardsStatus' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.4
+# Handler for columnar object 'zalEsShrdStatus' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.4
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsShardsStatus { 
+sub get_zalEsShrdStatus { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
+  printf STDERR "DEBUG: %04d: %s, index %s\n", __LINE__, $oid, $idx_zalEsIndicesIndex if ( $debug );
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -432,33 +220,32 @@ sub get_zalEsShardsStatus {
   # The index has already been checked and found to be valid
 
   my $status = $conf{statusnr}->{green};
-  foreach my $s (keys(%{$_indicesTable->{stats}->{shards}}) {
-    my $s = $conf{statusnr}->{lc($_indicesTable->{stats}->{shards}->{$s}->{status})};
+  # TODO: how to bind status to 'index'? (stats and products in our case)
+  foreach my $s (keys(%{$_indices_ref->{stats}->{shards}})) {
+    my $s = $conf{statusnr}->{lc($_indices_ref->{stats}->{shards}->{$s}->{status})};
     $status = $s if ( $s > $status ); # This keeps the worst case, red above
                                       # yellow and yellow above green
   }
 
-  # TODO: how to bind status to 'index'? (stats and products in our case)
-  return($conf{statusnr}->{lc($status)});
+  $ret = $conf{statusnr}->{lc($status)};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsShardsActive' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.5
+# Handler for columnar object 'zalEsShrdActive' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.5
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsShardsActive { 
+sub get_zalEsShrdActive { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -467,27 +254,26 @@ sub get_zalEsShardsActive {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  # TODO: 
-  return($_indicesTable->{stats}->{active_shards});
+  $ret = $_indices_ref->{stats}->{active_shards};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO:
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsShardsReloc' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.6
+# Handler for columnar object 'zalEsShrdReloc' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.6
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsShardsReloc { 
+sub get_zalEsShrdReloc { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -496,27 +282,26 @@ sub get_zalEsShardsReloc {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  # TODO: 
-  return($_indicesTable->{stats}->{relocating_shards});
+  $ret = $_indices_ref->{stats}->{relocating_shards};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO:
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsShardsInit' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.7
+# Handler for columnar object 'zalEsShrdInit' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.7
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsShardsInit { 
+sub get_zalEsShrdInit { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -525,27 +310,26 @@ sub get_zalEsShardsInit {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  # TODO: 
-  return($_indicesTable->{stats}->{initializing_shards});
+  $ret = $_indices_ref->{stats}->{initializing_shards};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO:
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsShardsUnas' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.8
+# Handler for columnar object 'zalEsShrdUnas' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.8
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsShardsUnas { 
+sub get_zalEsShrdUnas { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -554,27 +338,26 @@ sub get_zalEsShardsUnas {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  # TODO: 
-  return($_indicesTable->{stats}->{initializing_shards});
+  $ret = $_indices_ref->{stats}->{unassigned_shards};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO:
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsShardsPrim' 
-# OID: .1.3.6.1.4.1.43278.10.10.1.2.1.9
+# Handler for columnar object 'zalEsShrdPrim' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.9
 # Syntax: ASN_INTEGER
 # From: ZALIO-elasticsearch-MIB
 # In Table: zalEsIndicesTable
-# Index: zalEsClusterIndex
 # Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub get_zalEsShardsPrim { 
+sub get_zalEsShrdPrim { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsClusterIndex = getOidElement($oid, 13);
-  my $idx_zalEsIndicesIndex = getOidElement($oid, 14);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsClusterIndex if ( $debug );
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsIndicesIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
   # Load the zalEsIndicesTable table data
   load_zalEsIndicesTable();
@@ -583,581 +366,474 @@ sub get_zalEsShardsPrim {
   # using whatever indexing you need.
   # The index has already been checked and found to be valid
 
-  # TODO: 
-  return($_indicesTable->{stats}->{active_primary_shards});
+  $ret = $_indices_ref->{stats}->{active_primary_shards};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO:
+  return($ret);
 }
 # -------------------------------------------------------
-# Loader for table zalEsNodeTable
-# Edit this function to load the data needed for zalEsNodeTable
-# This function gets called for every request to columnar
-# data in the zalEsNodeTable table
+# Handler for columnar object 'zalEsShrdRepl' 
+# OID: .1.3.6.1.4.1.43278.10.10.3.1.1.10
+# Syntax: ASN_INTEGER
+# From: ZALIO-elasticsearch-MIB
+# In Table: zalEsIndicesTable
+# Index: zalEsIndicesIndex
 # -------------------------------------------------------
-sub load_zalEsNodeTable { 
-  $_nodeTable = $_nodeTable->{nodes}->{(keys(%{$_nodeTable->{nodes}}))[0]} if
-    load_zalEsClusterTable($conf{url}->{node_table}, $_nodeTable);
-}  
-# -------------------------------------------------------
-# Index validation for table zalEsNodeTable
-# Checks the supplied OID is in range
-# Returns 1 if it is and 0 if out of range
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
-# -------------------------------------------------------
-sub check_zalEsNodeTable {
+sub get_zalEsShrdRepl { 
   # The OID is passed as a NetSNMP::OID object
   my ($oid) = shift;
+  my $ret = ();
 
   # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsNodeIndex if ( $debug );
+  my $idx_zalEsIndicesIndex = getOidElement($oid, 13);
 
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
+  # Load the zalEsIndicesTable table data
+  load_zalEsIndicesTable();
 
-  # Check the index is in range and valid
-  return 1;
-}
+  # Code here to read the required variable from the loaded table
+  # using whatever indexing you need.
+  # The index has already been checked and found to be valid
 
-# -------------------------------------------------------
-# Index walker for table zalEsNodeTable
-# Given an OID for a table, returns the next OID in range, 
-# or if no more OIDs it returns 0.
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
-# -------------------------------------------------------
-sub next_zalEsNodeTable {
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
-
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsNodeIndex if ( $debug );
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Return the next OID if there is one
-  # or return 0 if no more OIDs in this table
-  return 0;
+  $ret = $_indices_ref->{stats}->{number_of_replicas};
+  printf STDERR "DEBUG: %04d: %s\n", __LINE__, $ret if ( $debug );
+  # TODO:
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsNodeName' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.2
+# Handler for scalar object zalEsStatus
+# OID: .1.3.6.1.4.1.43278.10.10.1.1
+# Syntax: ASN_INTEGER
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsStatus { 
+  my $ret = ();
+
+  load_clusterHealth();
+  $ret = $conf{statusnr}->{lc($_health_ref->{status})};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsClusterName
+# OID: .1.3.6.1.4.1.43278.10.10.1.2
 # Syntax: ASN_OCTET_STR
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
+# -------------------------------------------------------
+sub get_zalEsClusterName { 
+  my $ret = ();
+
+  load_clusterHealth();
+  $ret = $_health_ref->{cluster_name};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsNrNodes
+# OID: .1.3.6.1.4.1.43278.10.10.1.3
+# Syntax: ASN_INTEGER
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsNrNodes { 
+  my $ret = ();
+
+  load_clusterHealth();
+  $ret = $_health_ref->{number_of_nodes};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsNrDataNodes
+# OID: .1.3.6.1.4.1.43278.10.10.1.4
+# Syntax: ASN_INTEGER
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsNrDataNodes { 
+  my $ret = ();
+
+  load_clusterHealth();
+  $ret = $_health_ref->{number_of_data_nodes};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsDocsCount
+# OID: .1.3.6.1.4.1.43278.10.10.1.5
+# Syntax: ASN_GAUGE
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsDocsCount { 
+  my $ret = ();
+
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{docs}->{count};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsDocsDel
+# OID: .1.3.6.1.4.1.43278.10.10.1.6
+# Syntax: ASN_GAUGE
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsDocsDel { 
+  my $ret = ();
+
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{docs}->{deleted};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsStoreSize
+# OID: .1.3.6.1.4.1.43278.10.10.1.7
+# Syntax: ASN_GAUGE
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsStoreSize { 
+  my $ret = ();
+
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{store}->{size_in_bytes};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsStoreThr
+# OID: .1.3.6.1.4.1.43278.10.10.1.8
+# Syntax: ASN_GAUGE
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsStoreThr { 
+  my $ret = ();
+
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{store}->{throttle_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsMaster
+# OID: .1.3.6.1.4.1.43278.10.10.1.9
+# Syntax: ASN_OCTET_STR
+# From: ZALIO-elasticsearch-MIB
+# -------------------------------------------------------
+sub get_zalEsMaster { 
+  my $ret = ();
+
+  load_clusterState();
+  load_nodeStats();
+  $ret = $_stats_ref->{nodes}->{$_state_ref->{master_node}}->{host};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  # TODO: should we return true or false here?
+  return($ret);
+}
+# -------------------------------------------------------
+# Handler for scalar object zalEsNodeName
+# OID: .1.3.6.1.4.1.43278.10.10.2.2
+# Syntax: ASN_OCTET_STR
+# From: ZALIO-elasticsearch-MIB
 # -------------------------------------------------------
 sub get_zalEsNodeName { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsNodeIndex if ( $debug );
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_nodeTable->{name});
+  load_nodeStats();
+  $ret = $_node_ref->{name};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsIndexOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.5
+# Handler for scalar object zalEsIndexOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.5
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsIndexOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-  printf STDERR "DEBUG: %s: oid %s, index %s\n", __SUB__, $oid, $idx_zalEsNodeIndex if ( $debug );
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return($_nodeTable->{name});
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{indexing}->{index_total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsIndexTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.6
+# Handler for scalar object zalEsIndexTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.6
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsIndexTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{indexing}->{index_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsFlushOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.7
+# Handler for scalar object zalEsFlushOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.7
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsFlushOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{flush}->{total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsFlushTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.8
+# Handler for scalar object zalEsFlushTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.8
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsFlushTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{flush}->{total_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsThrottleTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.9
+# Handler for scalar object zalEsThrottleTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.9
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsThrottleTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{store}->{throttle_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsDeleteOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.10
+# Handler for scalar object zalEsDeleteOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.10
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsDeleteOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{indexing}->{delete_total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsDeleteTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.11
+# Handler for scalar object zalEsDeleteTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.11
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsDeleteTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{indexing}->{delete_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsGetOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.12
+# Handler for scalar object zalEsGetOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.12
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsGetOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{get}->{total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsGetTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.13
+# Handler for scalar object zalEsGetTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.13
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsGetTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{get}->{time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsExistsOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.14
+# Handler for scalar object zalEsExistsOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.14
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsExistsOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{get}->{exists_total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsExistsTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.15
+# Handler for scalar object zalEsExistsTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.15
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsExistsTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{get}->{exists_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsMissingOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.16
+# Handler for scalar object zalEsMissingOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.16
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsMissingOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{get}->{missing_total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsMissingTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.17
+# Handler for scalar object zalEsMissingTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.17
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsMissingTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{get}->{missing_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsQueryOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.18
+# Handler for scalar object zalEsQueryOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.18
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsQueryOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{search}->{query_total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsQueryTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.19
+# Handler for scalar object zalEsQueryTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.19
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsQueryTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{search}->{query_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsFetchOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.20
+# Handler for scalar object zalEsFetchOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.20
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsFetchOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{search}->{fetch_total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsFetchTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.21
+# Handler for scalar object zalEsFetchTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.21
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsFetchTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{search}->{fetch_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsMergeOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.22
+# Handler for scalar object zalEsMergeOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.22
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsMergeOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{merges}->{total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsMergeTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.23
+# Handler for scalar object zalEsMergeTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.23
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsMergeTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{merges}->{total_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsRefreshOps' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.24
+# Handler for scalar object zalEsRefreshOps
+# OID: .1.3.6.1.4.1.43278.10.10.2.24
 # Syntax: ASN_COUNTER64
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsRefreshOps { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
-  return 64;
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{refresh}->{total};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 # -------------------------------------------------------
-# Handler for columnar object 'zalEsRefreshTime' 
-# OID: .1.3.6.1.4.1.43278.10.10.2.1.1.25
+# Handler for scalar object zalEsRefreshTime
+# OID: .1.3.6.1.4.1.43278.10.10.2.25
 # Syntax: ASN_GAUGE
 # From: ZALIO-elasticsearch-MIB
-# In Table: zalEsNodeTable
-# Index: zalEsNodeIndex
 # -------------------------------------------------------
 sub get_zalEsRefreshTime { 
-  # The OID is passed as a NetSNMP::OID object
-  my ($oid) = shift;
+  my $ret = ();
 
-  # The values of the oid elements for the indexes
-  my $idx_zalEsNodeIndex = getOidElement($oid, 13);
-
-  # Load the zalEsNodeTable table data
-  load_zalEsNodeTable();
-
-  # Code here to read the required variable from the loaded table
-  # using whatever indexing you need.
-  # The index has already been checked and found to be valid
-
+  load_nodeStats();
+  $ret = $_node_ref->{indices}->{refresh}->{total_time_in_millis};
+  printf STDERR "DEBUG: %04d: ret %s\n", __LINE__, $ret if ( $debug );
+  return($ret);
 }
 
 1;
