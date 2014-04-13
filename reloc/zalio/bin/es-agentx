@@ -1,0 +1,83 @@
+#!/usr/bin/env perl
+
+use strict;
+use NetSNMP::OID;
+use NetSNMP::agent (':all');
+use FindBin qw($Bin $RealBin $Script $RealScript);
+use vars qw(%config);
+use lib (
+          "$RealBin/../etc",
+          "$RealBin/../lib",
+        );
+use Data::Dumper;
+use SNMP::elasticsearch;
+do "elasticsearch-snmp.conf";
+
+my %data = ();			# Cache
+my $es = ();
+
+# Handle request
+sub handle_stats {
+  my ($handler, $registration_info, $request_info, $requests) = @_;
+  $es = SNMP::elasticsearch->new(\%data) unless ( ref($es) eq "SNMP::elasticsearch" );
+  $es->update_stats;    	# Maybe we should do this in a thread...
+
+  for ( my $request = $requests; $request; $request = $request->next() ) {
+    $SNMP::use_numeric = 1;
+    my $oid = $request->getOID(); # the OID in dotted-decimal format
+    my $noid = SNMP::translateObj($oid);
+
+    printf STDERR "DEBUG: %s - %04d: oid = '%s'\n", __PACKAGE__, __LINE__, $noid if ( $config{debug} >= 1 );
+
+    if ( $request_info->getMode() == MODE_GET ) {
+      # For a GET request, we just check the data structure
+      if ( $es->oid($noid) ) {
+
+        printf STDERR "DEBUG: %s - %04d: type = '%s', val = '%s'\n", __PACKAGE__, __LINE__, $es->type($noid), $es->val($noid) if ( $config{debug} >= 5 );
+
+        # using $oid is more efficient than using $noid
+    	$request->setValue($es->type($noid), $es->val($noid));
+      }
+    } elsif ( $request_info->getMode() == MODE_GETNEXT ) {
+      # For a GETNEXT, we need to find a best match. This is the
+      # first match strictly superior to the requested OID.
+      my $bestoid = undef;
+      foreach my $currentoid ($es->oid()) {
+    	$currentoid = new NetSNMP::OID($currentoid);
+    	next if $currentoid <= $oid;
+    	$bestoid = $currentoid;
+    	last;
+      }
+      if ( defined $bestoid ) {
+    	$SNMP::use_numeric = 1;
+    	my $noid=SNMP::translateObj($bestoid);
+    	$request->setOID($bestoid);
+
+        printf STDERR "DEBUG: %s - %04d: type = '%s', val = '%s'\n", __PACKAGE__, __LINE__, $es->type($noid), $es->val($noid) if ( $config{debug} >= 1 );
+
+    	$request->setValue($es->type($noid), $es->val($noid));
+      }
+    }
+  }
+}
+
+my $agent = new NetSNMP::agent('Name' => "elasticsearch", 'AgentX' => 1);
+
+# Register MIB
+$agent->register("elasticsearch-stats", $config{oid_base},
+		 \&handle_stats) or die "registration of handler failed!\n";
+
+# Main loop
+$SIG{'INT'} = \&shutdown;
+$SIG{'QUIT'} = \&shutdown;
+my $running = 1;
+while ($running) {
+    $agent->agent_check_and_process(1);
+}
+$agent->shutdown();
+
+sub shutdown {
+    # Shutdown requested
+    $running = 0;
+}
+

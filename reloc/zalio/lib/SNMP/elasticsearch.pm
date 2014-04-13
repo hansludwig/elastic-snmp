@@ -10,6 +10,7 @@ use LWP::Simple;
 use URI;
 use JSON::XS;
 use NetSNMP::OID;
+use NetSNMP::ASN (':all');
 use vars qw(@EXPORT @EXPORT_OK %EXPORT_TAGS @ISA $AUTOLOAD %config %oidmap);
 use lib (
           "$ENV{HOME}/rpm/BUILD/elasticsearch-snmp/reloc/zalio/etc",
@@ -53,6 +54,7 @@ my $nodes_stats = {};
 my $node_stats = {};
 my $last_cluster_health = {};
 my $last_cluster_state = {};
+my $last_cluster_stats = {};
 my $last_nodes_stats = {};
 my $last_node_stats = {};
 
@@ -63,7 +65,7 @@ my $last_node_stats = {};
 sub new {
   my $self = {};
   my $class = shift;
-     $self->{es_data} = shift;
+     $self->{es_data}->{val} = shift;
   unless ( defined($self->{es_data}) && ref($self->{es_data}) eq "HASH" ) {
     printf STDERR "%s: expects a HASH ref as argument to the constructor\n", __PACKAGE__;
     return();
@@ -83,11 +85,19 @@ sub new {
 
 sub update_stats {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: update_stats(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: update_stats(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
   my $host = ();
   my %table = ();
+  # without this eval doesn't find the variable
+  $cluster_health = $cluster_health;
+  $cluster_state = $cluster_state;
+  $cluster_stats = $cluster_stats;
+  $nodes_stats = $nodes_stats;
+  $node_stats = $node_stats;
 
-  $self->load() if ( $self->expired() );
+  return (1) unless ( $self->expired() );
+
+  $self->load();
 
   # Get the node statistics for the local node
   $host = (defined($self->{url}->{host}) && 
@@ -106,39 +116,55 @@ sub update_stats {
 
   # Fill es_data with life stats, columnar objects (tables) are dealt
   # with in a second step
-  foreach my $o (keys(%oidmap)) {
-    if ( defined($oidmap{$o}->{table_entry}) ) {
-      push(@{$table{$oidmap{$o}->{parent}}}, $o);
+  foreach my $oid_ind (keys(%oidmap)) {
+    if ( defined($oidmap{$oid_ind}->{table_entry}) ) {
+      push(@{$table{$oidmap{$oid_ind}->{parent}}}, $oid_ind);
       next;
     }
-    defined($oidmap{$o}->{index}) and next;
+    defined($oidmap{$oid_ind}->{index}) and next;
     my $temp = '$node_stats->{transport}->{rx_count}';
-    #printf STDERR "TEMP: %04d: %s", __LINE__, Data::Dumper->Dump([$node_stats], [qw(node_stats)]);
-    printf STDERR "TEMP: %04d: %s\n", __LINE__, eval($temp);
-    $self->_get_oid($o, $oidmap{$o}->{oid});
+    $self->_get_oid($oid_ind, $oidmap{$oid_ind}->{oid});
   }
   
   # Deal with table data
-  printf STDERR "TEMP: %04d: table keys '%s'\n", __LINE__ ,join(", ", keys(%table));
-  foreach my $t (keys(%table)) {
-    my $table_name = "SNMP::elasticsearch::" . $oidmap{$t}->{parent};
-    printf STDERR "TEMP: %04d: table_name ='%s'\n", __LINE__, $table_name;
-    eval { eval "require $table_name" };
-    if ( $@ ) {
-      printf STDERR "%s: failed to load table $table_name\n", __PACKAGE__;
-      next;
-    }
-    printf STDERR "DEBUG: %04d: loaded $table_name\n", __LINE__ if ( $self->{debug} >= 2 );
-    printf STDERR "TEMP: %04d: %s", __LINE__, Data::Dumper->Dump([$esTable], [qw(esTable)]);
-    printf STDERR "TEMP: %04d:  '$oidmap{$t}->{jref}'\n", __LINE__;
-    printf STDERR "TEMP: %04d:  %s\n", __LINE__, Data::Dumper->Dump([$cluster_health], [qw(cluster_health)]);
-    my $indices = eval($oidmap{$t}->{jref});
-    foreach my $i (keys(%{$indices})) {
-      my $index = $table_name->new();
-      my $numind = ();
-      map { $numind += ord($_) } split(//, $i);
-      foreach my $o (@{$table{$t}}) {
-        $self->{es_data}->{$oidmap{$o}->{oid} . "." . $numind} = $index->get($o);
+  #
+  # xxxEntry elements are used as keys for all elements of a table. 
+  # These keys have been pushed into %table in the processing above.
+  printf STDERR "TEMP: %s - %04d: %s", __PACKAGE__, __LINE__, Data::Dumper->Dump([\%table], [qw(table)]);
+  foreach my $xxxEntry (keys(%table)) {
+    #
+    # Get indices via jref field of the xxxEntry oid.
+    my $indices = eval($oidmap{$xxxEntry}->{jref});
+    foreach my $ind (keys(%{$indices})) {
+      printf STDERR "DEBUG: %s - %04d: \$xxxEntry = '%s', \$ind = '%s'\n", __PACKAGE__, __LINE__, $xxxEntry, $ind if ( $self->{debug} >= 2 );
+      #
+      # calculate the numeric index appended to the numeric OID
+      # for this indices member.
+      my $index = ();
+      map { $index += ord($_) } split(//, $ind);
+
+      #
+      # work with the original oid references from %oidmap
+      foreach my $oid_ref (@{$table{$xxxEntry}}) {
+        my $val = ();
+        #
+        # our mib2c template adds '$' in fron of the reference
+        # string (jref), which in this case we don't want
+        $oidmap{$oid_ref}->{jref} =~ s/^\$+//;
+        if ( $oidmap{$oid_ref}->{jref} =~ /\bname\b/i ) {
+          #
+          # {name} is a special case, it's replaced with the
+          # value of the actual indices member we are working
+          # on ($ind) 
+          $val = $ind;
+        } else {
+          $val = $oidmap{$xxxEntry}->{jref} . '->{' . $ind . '}->' . $oidmap{$oid_ref}->{jref};
+          printf STDERR "DEBUG: %s - %04d: table element mapping '%s'\n", __PACKAGE__, __LINE__, $val if ( $self->{debug} >= 2 );
+          $val = eval($val);
+        }
+        printf STDERR "DEBUG: %s - %04d: %s = %s\n", __PACKAGE__, __LINE__, $oidmap{$oid_ref}->{oid} . "." . $index, $val if ( $self->{debug} >= 2 );
+        $self->{es_data}->{$oidmap{$oid_ref}->{oid} . "." . $index}->{val} = $val;
+        $self->{es_data}->{$oidmap{$oid_ref}->{oid} . "." . $index}->{type} = $oidmap{$oid_ref}->{type};
       }
     }
   }
@@ -150,7 +176,7 @@ sub update_stats {
 
 sub load {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: load(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: load(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
 
   # Get information from elasticsearch via REST interface
   $cluster_health = decode_json($self->_get_json("cluster_health"));
@@ -163,30 +189,61 @@ sub load {
 
 sub oid {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: oid(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: oid(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
   my $oid = shift;
   
-  #return() unless ( defined(wantarray) );
-  printf STDERR "DEBUG: %s", Data::Dumper->Dump([$self->{es_data}], [qw(es_data)]);
+  return() unless ( defined(wantarray) );
+  return(@{$self->{oids}}) if ( wantarray() );
+  return(1) if ( $oid && grep(/^$oid$/, @{$self->{oids}}) );
 
+  return();
+}
+
+sub val ($) {
+  my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
+  printf STDERR "DEBUG: %s - %04d: val(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
+  my $noid = shift;
+  my $val = ();
+
+  $val = $self->{es_data}->{$noid}->{val} if ( defined($self->{es_data}->{$noid}->{val}) );
+
+  return($val);
+}
+
+sub type ($) {
+  my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
+  printf STDERR "DEBUG: %s - %04d: type(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
+  my $noid = shift;
+  my $type = ();
+
+  $type = $self->{es_data}->{$noid}->{type} if ( defined($self->{es_data}->{$noid}->{type}) );
+    
+  return($type);
 }
 
 sub expired {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: expired(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: expired(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
 
   return(((time() - $self->{refresh_timer}) > $self->{last_load} ? 1 : 0));
 }
 
 sub _calculate ($) {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: _calculate(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: _calculate(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
   my $oid = shift;
   my($elapsed,$last,$current) = ();
+  # without this eval doesn't find the variable
+  $cluster_health = $cluster_health;
+  $cluster_state = $cluster_state;
+  $cluster_stats = $cluster_stats;
+  $nodes_stats = $nodes_stats;
+  $node_stats = $node_stats;
 
   # This should do a deep copy of the whole hash of hashes.
   %{$last_cluster_health} = %{$cluster_health} unless ( %{$last_cluster_health} );
   %{$last_cluster_state} = %{$cluster_state} unless ( %{$last_cluster_state} );
+  %{$last_cluster_stats} = %{$cluster_stats} unless ( %{$last_cluster_stats} );
   %{$last_nodes_stats} = %{$nodes_stats} unless ( %{$last_nodes_stats} );
   %{$last_node_stats} = %{$node_stats} unless ( %{$last_node_stats} );
 
@@ -194,48 +251,46 @@ sub _calculate ($) {
   $elapsed = ($node_stats->{process}->{timestamp} - 
              $last_node_stats->{process}->{timestamp}) / 1000;
   $elapsed = 1 if ( $elapsed < 1 );
-  printf STDERR "TEMP: %04d: oid = '$oid', %s", __LINE__, Data::Dumper->Dump([$oidmap{$oid}], [qw(oid)]);
   $last = $oidmap{$oid}->{jref};
   $last =~ s/^\$/\$last_/;
-  printf STDERR "TEMP: %04d:  '$last'\n", __LINE__;
+  my $tmp = $last;
   $last = eval($last);
-  printf STDERR "TEMP: %04d:  '$oidmap{$oid}->{jref}'\n", __LINE__;
   $current = eval($oidmap{$oid}->{jref});
   
-  printf STDERR "TEMP: %04d: last = '$last', current = '$current'\n", __LINE__;
-  printf STDERR "TEMP: %04d: ($current - $last) / $elapsed * $self->{calc_steps})\n", __LINE__;
   return(($current - $last) / $elapsed * $self->{calc_steps});
 }
 
 sub _get_oid ($$) {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: _get_oid(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: _get_oid(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
   my $oid_str = shift;
   my $oid_num = shift;
-
-  no strict qw(refs vars);
-  for (my $i = 0;  $i <= $#_; $i++) {
-    $$_[$i++] = ($_[$i] ? $_[$i] : "n/a");
-  }
-
+  my $val = ();
+  # without this eval doesn't find the variable
   $cluster_health = $cluster_health;
   $cluster_state = $cluster_state;
   $cluster_stats = $cluster_stats;
   $nodes_stats = $nodes_stats;
   $node_stats = $node_stats;
 
-  printf STDERR "TEMP: %04d: %s\n", __LINE__, $oidmap{$oid_str}->{jref};
-  $self->{es_data}->{$oid_num} = ($oid_str =~ /Del$/ ? 
-                                 $self->_calculate($oid_str) :
-                                 eval($oidmap{$oid_str}->{jref}));
-  printf STDERR "TEMP: %04d: %s\n", __LINE__, $self->{es_data}->{$oid_num};
+  no strict qw(refs vars);
+  for (my $i = 0;  $i <= $#_; $i++) {
+    $$_[$i++] = ($_[$i] ? $_[$i] : "n/a");
+  }
+
+  $val = ($oid_str =~ /Del$/ ? 
+          $self->_calculate($oid_str) :
+          eval($oidmap{$oid_str}->{jref}));
+  $val = $statusnr{$val} if ( defined($statusnr{$val}) );
+  $self->{es_data}->{$oid_num}->{val} = $val;
+  $self->{es_data}->{$oid_num}->{type} = $oidmap{$oid_str}->{type};
 
   return(1);
 }
 
 sub _get_json ($) {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %04d - %d: _get_json(%s)\n", __LINE__, $self->{debug}, join(", ", @_) if ( $self->{debug} >= 5 );
+  printf STDERR "DEBUG: %s - %04d: _get_json(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
   my $url = shift;
   my($uri, $json) = ();
 
@@ -243,10 +298,34 @@ sub _get_json ($) {
   $uri->host($self->{url}->{host}) if ( defined($self->{url}->{host}) );
   $uri->port($self->{url}->{port}) if ( defined($self->{url}->{port}) );
 
-  printf STDERR "DEBUG: reloading $uri\n" if ( $self->{debug} );
+  printf STDERR "DEBUG: %s - %04d: reloading $uri\n", __PACKAGE__, __LINE__ if ( $self->{debug} );
   $json = get($uri) or die "$!";
 
   return($json);
 }
 
 1;
+
+__END__
+
+ASN_BOOLEAN = 1
+ASN_INTEGER = 2
+ASN_BIT_STR = 3
+ASN_OCTET_STR = 4
+ASN_NULL = 5
+ASN_OBJECT_ID = 6
+ASN_SEQUENCE = 16
+ASN_SET = 17
+ASN_APPLICATION = 64
+ASN_IPADDRESS = 64
+ASN_COUNTER = 65
+ASN_GAUGE = 66
+ASN_UNSIGNED = 66
+ASN_TIMETICKS = 67
+ASN_OPAQUE = 68
+ASN_COUNTER64 = 70
+ASN_FLOAT = 72
+ASN_DOUBLE = 73
+ASN_INTEGER64 = 74
+ASN_UNSIGNED64 = 75
+

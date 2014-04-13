@@ -7,9 +7,11 @@ NAME		:= zalio
 PREFIX		:= /opt
 RELOC		:= reloc
 DESTDIR		 =
-CONFIG_FILES	 = $(PREFIX)/$(NAME)/etc/elasticsearch-snmp.conf
+CONFIG_FILES	 = $(PREFIX)/$(NAME)/etc/elasticsearch-snmp.conf \
+                   (PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm 
 CONFIG_DIRS	 = 
-CODE_OBJECTS	 = 
+CODE_OBJECTS	 = /usr/share/snmp/mibs/ZALIO-MIB.txt \
+                   /usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt
 
 # .../share/man[0-9]/... must not be included, perl module man pages
 # have file names like .../share/man/man3/LWP::Debug.3pm, where the '::'
@@ -22,18 +24,17 @@ CODE_OBJECTS	 = $(addprefix root/etc/rc.d/init.d/logstash-, concentrator collect
 all::
 
 OID             := $(patsubst .%,%,$(shell snmptranslate -IR -On zalEs))
-MIBNAME         := ZALIO-elasticsearch-MIB
-x:
-	echo RELOC $(RELOC)
 
-mib: $(RELOC)/$(NAME)/lib/agent_$(OID).pl
-$(RELOC)/$(NAME)/lib/agent_$(OID).pl: root/usr/share/snmp/mibs/$(MIBNAME).txt tools/mib2c.perl.conf
+mib: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
+
+$(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt 
 	@$(ING-MESSAGE) creat $@
 	$(ATSIGN)\
+	mkdir -p $(@D); \
 	cd $(@D); \
-	mib2c -c $(PWD)/tools/mib2c.perl.conf $(OID)
+	mib2c -c $(PWD)/$< $(OID)
 
-
+$(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
 
 # make will not complain if this file does not exist, however
 # without this things wont work! Makw sure it's there!
