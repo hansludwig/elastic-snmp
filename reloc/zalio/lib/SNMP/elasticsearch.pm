@@ -47,6 +47,12 @@ my %statusstr = (
                  yellow => "yellow",
                  red    => "red",
                );
+my %truthnr = (
+                 true   => 1,
+                 false  => 2,
+                 1      => 1,
+                 2      => 2,
+              );
 my $cluster_health = {};
 my $cluster_state = {};
 my $cluster_stats = {};
@@ -121,8 +127,10 @@ sub update_stats {
       push(@{$table{$oidmap{$oid_ind}->{parent}}}, $oid_ind);
       next;
     }
+
+    # Skip xxxEntry entries, they've got no value attached
     defined($oidmap{$oid_ind}->{index}) and next;
-    my $temp = '$node_stats->{transport}->{rx_count}';
+
     $self->_get_oid($oid_ind, $oidmap{$oid_ind}->{oid});
   }
   
@@ -240,7 +248,7 @@ sub _calculate ($) {
   $nodes_stats = $nodes_stats;
   $node_stats = $node_stats;
 
-  # This should do a deep copy of the whole hash of hashes.
+  # This is supposed to do a deep copy of the whole hash of hashes.
   %{$last_cluster_health} = %{$cluster_health} unless ( %{$last_cluster_health} );
   %{$last_cluster_state} = %{$cluster_state} unless ( %{$last_cluster_state} );
   %{$last_cluster_stats} = %{$cluster_stats} unless ( %{$last_cluster_stats} );
@@ -281,7 +289,18 @@ sub _get_oid ($$) {
   $val = ($oid_str =~ /Del$/ ? 
           $self->_calculate($oid_str) :
           eval($oidmap{$oid_str}->{jref}));
+
+  # ES stati are returned as red green yellow and transformed to
+  # numeric values as defined by the EsStatusTC ::= TEXTUAL-CONVENTION
   $val = $statusnr{$val} if ( defined($statusnr{$val}) );
+
+  # zalEsMaster is true if the master node name equals the local
+  # node name. TODO: make dealing with such cases more generic
+  if ( $oid_str eq "zalEsMaster" ) {
+     $val = ($val eq $node_stats->{uuid} ? "true" : "false");
+     $val = $truthnr{$val};
+  }
+
   $self->{es_data}->{$oid_num}->{val} = $val;
   $self->{es_data}->{$oid_num}->{type} = $oidmap{$oid_str}->{type};
 
