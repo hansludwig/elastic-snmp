@@ -4,7 +4,7 @@
 #
 
 NAME		:= zalio
-#
+# The OID of       ZALIO-elasticsearch-MIB::zalEs
 OID             := .1.3.6.1.4.1.43278.10.10
 PREFIX		:= /opt
 RELOC		:= reloc
