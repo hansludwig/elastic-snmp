@@ -4,26 +4,24 @@
 #
 
 NAME		:= zalio
+#
+OID             := .1.3.6.1.4.1.43278.10.10
 PREFIX		:= /opt
 RELOC		:= reloc
 DESTDIR		 =
 CONFIG_FILES	 = $(PREFIX)/$(NAME)/etc/elasticsearch-snmp.conf \
-                   (PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm 
+                   $(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm \
+                   /etc/snmp/snmp.conf \
+                   /etc/snmp/snmpd.local.conf \
+                   /etc/sysconfig/snmpd
 CONFIG_DIRS	 = 
-CODE_OBJECTS	 = /usr/share/snmp/mibs/ZALIO-MIB.txt \
+CODE_FILES	 = $(PREFIX)/$(NAME)/bin/es-agentx \
+                   $(PREFIX)/$(NAME)/lib/SNMP/elasticsearch.pm \
+                   /usr/share/snmp/mibs/ZALIO-MIB.txt \
                    /usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt
-
-# .../share/man[0-9]/... must not be included, perl module man pages
-# have file names like .../share/man/man3/LWP::Debug.3pm, where the '::'
-# confuse the hell out of make
-#CODE_FILES	 = $(subst $(RELOC),$(PREFIX),$(RELOC)/salt/bin/ramf2grains)
-CODE_FILES	 = 
 CODE_DIRS	 = 
-CODE_OBJECTS	 = $(addprefix root/etc/rc.d/init.d/logstash-, concentrator collector web)
 
 all::
-
-OID             := $(patsubst .%,%,$(shell snmptranslate -IR -On zalEs))
 
 mib: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
 
