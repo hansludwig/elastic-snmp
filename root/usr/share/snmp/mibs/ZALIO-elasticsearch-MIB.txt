@@ -321,7 +321,7 @@ zalEsRefreshTime OBJECT-TYPE -- Node
         "node_stats->{indices}->{refresh}->{total_time_in_millis}"
     ::= { zalEsNode 22 }
 
-zalEsProcMemResDel OBJECT-TYPE -- Node
+zalEsProcMemRes OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -329,7 +329,7 @@ zalEsProcMemResDel OBJECT-TYPE -- Node
         "node_stats->{process}->{mem}->{resident_in_bytes}"
     ::= { zalEsNode 23 }
 
-zalEsProcMemShrDel OBJECT-TYPE -- Node
+zalEsProcMemShr OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -337,7 +337,7 @@ zalEsProcMemShrDel OBJECT-TYPE -- Node
         "node_stats->{process}->{mem}->{share_in_bytes}"
     ::= { zalEsNode 24 }
 
-zalEsProcCpuSysDel OBJECT-TYPE -- Node
+zalEsProcCpuSys OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -345,7 +345,7 @@ zalEsProcCpuSysDel OBJECT-TYPE -- Node
         "node_stats->{process}->{cpu}->{sys_in_millis}"
     ::= { zalEsNode 25 }
 
-zalEsProcCpuUsrDel OBJECT-TYPE -- Node
+zalEsProcCpuUsr OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -491,10 +491,10 @@ zalEsNodeGroup OBJECT-GROUP
              zalEsMergeTime,
              zalEsRefreshTotal,
              zalEsRefreshTime,
-             zalEsProcMemResDel,
-             zalEsProcMemShrDel,
-             zalEsProcCpuSysDel,
-             zalEsProcCpuUsrDel,
+             zalEsProcMemRes,
+             zalEsProcMemShr,
+             zalEsProcCpuSys,
+             zalEsProcCpuUsr,
              zalEsTrspRxDel,
              zalEsTrspTxDel,
              zalEsTrspRxSzDel,
