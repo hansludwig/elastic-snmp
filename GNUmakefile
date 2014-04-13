@@ -3,7 +3,7 @@
 # $Id: GNUmakefile 2157 2009-12-03 12:50:12Z f476459 $
 #
 
-NAME		:= zalio
+NAME		:= elasticsearch-snmp
 # The OID of       ZALIO-elasticsearch-MIB::zalEs
 OID             := .1.3.6.1.4.1.43278.10.10
 PREFIX		:= /opt
@@ -49,3 +49,5 @@ clean::
 	$(RM) *.tmp
 	$(RM) debug*.list
 	$(RM) files.lst
+	$(RM)r reloc/$(NAME)/lib/SNMP/elasticsearch
+
