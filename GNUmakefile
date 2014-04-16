@@ -12,11 +12,11 @@ DESTDIR		 =
 CONFIG_FILES	 = $(PREFIX)/$(NAME)/etc/elasticsearch-snmp.conf \
                    $(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm \
                    /etc/snmp/snmp.conf \
-                   /etc/snmp/snmpd.local.conf \
-                   /etc/sysconfig/snmpd
+                   /etc/snmp/snmpd.local.conf
 CONFIG_DIRS	 = 
 CODE_FILES	 = $(PREFIX)/$(NAME)/bin/es-agentx \
                    $(PREFIX)/$(NAME)/lib/SNMP/elasticsearch.pm \
+                   /etc/rc.d/init.d/esagentx \
                    /usr/share/snmp/mibs/ZALIO-MIB.txt \
                    /usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt
 CODE_DIRS	 = 
@@ -28,6 +28,8 @@ mib: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
 $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt 
 	@$(ING-MESSAGE) creat $@
 	$(ATSIGN)\
+	export MIBS=ALL; \
+        export MIBDIRS="+$(PWD)/root/usr/share/snmp/mibs"; \
 	mkdir -p $(@D); \
 	cd $(@D); \
 	mib2c -c $(PWD)/$< $(OID)

@@ -15,9 +15,11 @@ do "elasticsearch-snmp.conf";
 
 my %data = ();			# Cache
 my $es = ();
+$SNMP::debugging = 1;
 
 # Handle request
 sub handle_stats {
+  printf STDERR "TEMP: %s - %04d: %s\n", __PACKAGE__, __LINE__, join(", ", @_);
   my ($handler, $registration_info, $request_info, $requests) = @_;
   $es = SNMP::elasticsearch->new(\%data) unless ( ref($es) eq "SNMP::elasticsearch" );
   $es->update_stats;    	# Maybe we should do this in a thread...
@@ -61,9 +63,10 @@ sub handle_stats {
   }
 }
 
-my $agent = new NetSNMP::agent('Name' => "elasticsearch", 'AgentX' => 1);
+my $agent = new NetSNMP::agent('Name' => "elasticsearch-stats", 'AgentX' => 1);
 
 # Register MIB
+printf STDERR "TEMP: %s - %04d: $config{oid_base} %s\n", __PACKAGE__, __LINE__, \&handle_stats;
 $agent->register("elasticsearch-stats", $config{oid_base},
 		 \&handle_stats) or die "registration of handler failed!\n";
 

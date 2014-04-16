@@ -3,7 +3,7 @@
 Summary: SNMP agent extensions for elasticsearch
 Name: elasticsearch-snmp
 Version: 1.0.0
-Release: 1
+Release: 2
 #Copyright: GPL
 Packager: ortecin GmbH <hans.riethmann@ortecin.ch>
 Vendor: zal.io
@@ -52,7 +52,7 @@ make PREFIX=%{prefix} NAME=%{name} DESTDIR=$RPM_BUILD_ROOT \
 %post
 if [ "%{service}" ]; then
   # status returns 0 if the service is running, we only restart it if it is
-  service %{service} status > /dev/null && service rsyslog stop
+  service %{service} status > /dev/null && service %{service} stop
   service %{service} start
 fi
 

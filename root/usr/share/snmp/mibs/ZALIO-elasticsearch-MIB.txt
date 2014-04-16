@@ -30,7 +30,6 @@ zalElasticsearch MODULE-IDENTITY
     zalEs             OBJECT IDENTIFIER ::= { zalApps 10 }
     zalEsCluster      OBJECT IDENTIFIER ::= { zalEs 1 }
     zalEsNode         OBJECT IDENTIFIER ::= { zalEs 2 }
-    zalEsIndices      OBJECT IDENTIFIER ::= { zalEs 3 }
 
 
 -- The textual conventions we define and use in this MIB.
@@ -353,13 +352,61 @@ zalEsProcCpuUsr OBJECT-TYPE -- Node
         "node_stats->{process}->{cpu}->{user_in_millis}"
     ::= { zalEsNode 26 }
 
+zalEsJvmHeap OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{mem}->{heap_used_in_bytes}"
+    ::= { zalEsNode 27 }
+
+zalEsJvmHeapPerc OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{mem}->{heap_used_percent}"
+    ::= { zalEsNode 28 }
+
+zalEsJvmHeapCommit OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{mem}->{heap_committed_in_bytes}"
+    ::= { zalEsNode 29 }
+
+zalEsJvmHeapMax OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{mem}->{heap_max_in_bytes}"
+    ::= { zalEsNode 30 }
+
+zalEsJvmNonHeap OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{mem}->{non_heap_used_in_bytes}"
+    ::= { zalEsNode 31 }
+
+zalEsJvmNonHeapCommit OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{mem}->{non_heap_committed_in_bytes}"
+    ::= { zalEsNode 32 }
+
 zalEsTrspRxDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{rx_count}"
-    ::= { zalEsNode 27 }
+    ::= { zalEsNode 33 }
 
 zalEsTrspTxDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -367,7 +414,7 @@ zalEsTrspTxDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{tx_count}"
-    ::= { zalEsNode 28 }
+    ::= { zalEsNode 34 }
 
 zalEsTrspRxSzDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -375,7 +422,7 @@ zalEsTrspRxSzDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{rx_size_in_bytes}"
-    ::= { zalEsNode 29 }
+    ::= { zalEsNode 35 }
 
 zalEsTrspTxSzDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -383,7 +430,7 @@ zalEsTrspTxSzDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{tx_size_in_bytes}"
-    ::= { zalEsNode 30 }
+    ::= { zalEsNode 36 }
 
 zalEsSrchQrDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -391,7 +438,7 @@ zalEsSrchQrDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{search}->{query_total}"
-    ::= { zalEsNode 31 }
+    ::= { zalEsNode 37 }
 
 zalEsSrchFtDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -399,7 +446,7 @@ zalEsSrchFtDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{search}->{fetch_total}"
-    ::= { zalEsNode 32 }
+    ::= { zalEsNode 38 }
 
 zalEsSrchQrTmDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -407,7 +454,7 @@ zalEsSrchQrTmDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{search}->{query_time_in_millis}"
-    ::= { zalEsNode 33 }
+    ::= { zalEsNode 39 }
 
 zalEsSrchFtTmDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -415,7 +462,7 @@ zalEsSrchFtTmDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{search}->{fetch_time_in_millis}"
-    ::= { zalEsNode 34 }
+    ::= { zalEsNode 40 }
 
 zalEsGetDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -423,7 +470,7 @@ zalEsGetDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{get}->{total}"
-    ::= { zalEsNode 35 }
+    ::= { zalEsNode 41 }
 
 zalEsGetExDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -431,7 +478,7 @@ zalEsGetExDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{get}->{exists_total}"
-    ::= { zalEsNode 36 }
+    ::= { zalEsNode 42 }
 
 zalEsGetMisDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -439,7 +486,7 @@ zalEsGetMisDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{get}->{missing_total}"
-    ::= { zalEsNode 37 }
+    ::= { zalEsNode 43 }
 
 zalEsGetTmDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -447,7 +494,7 @@ zalEsGetTmDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{get}->{time_in_millis}"
-    ::= { zalEsNode 38 }
+    ::= { zalEsNode 44 }
 
 zalEsGetExTmDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -455,7 +502,7 @@ zalEsGetExTmDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{get}->{exists_time_in_millis}"
-    ::= { zalEsNode 39 }
+    ::= { zalEsNode 45 }
 
 zalEsGetMisTmDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -463,7 +510,7 @@ zalEsGetMisTmDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{indices}->{get}->{missing_time_in_millis}"
-    ::= { zalEsNode 40 }
+    ::= { zalEsNode 46 }
 
 -- Node group definition
 
@@ -526,7 +573,7 @@ zalEsIndicesTable OBJECT-TYPE
     STATUS     current
     DESCRIPTION
         "A list of elasticsearch cluster state entries."
-    ::= { zalEsIndices 1 }
+    ::= { zalEsCluster 10 }
 
 zalEsIndicesEntry OBJECT-TYPE
     SYNTAX     ZalEsIndicesEntry

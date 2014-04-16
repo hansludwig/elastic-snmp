@@ -117,9 +117,6 @@ sub update_stats {
     }
   }
   
-  # Are we the master node
-  $node_stats->{master} = ($cluster_state->{master_node} eq $node_stats->{uuid} ? 1 : 0);
-
   # Fill es_data with life stats, columnar objects (tables) are dealt
   # with in a second step
   foreach my $oid_ind (keys(%oidmap)) {
@@ -138,7 +135,6 @@ sub update_stats {
   #
   # xxxEntry elements are used as keys for all elements of a table. 
   # These keys have been pushed into %table in the processing above.
-  printf STDERR "TEMP: %s - %04d: %s", __PACKAGE__, __LINE__, Data::Dumper->Dump([\%table], [qw(table)]);
   foreach my $xxxEntry (keys(%table)) {
     #
     # Get indices via jref field of the xxxEntry oid.
@@ -169,6 +165,8 @@ sub update_stats {
           $val = $oidmap{$xxxEntry}->{jref} . '->{' . $ind . '}->' . $oidmap{$oid_ref}->{jref};
           printf STDERR "DEBUG: %s - %04d: table element mapping '%s'\n", __PACKAGE__, __LINE__, $val if ( $self->{debug} >= 2 );
           $val = eval($val);
+          $val = $statusnr{$val} if ( defined($statusnr{$val}) );
+          $val = $truthnr{$val} if ( defined($truthnr{$val}) );
         }
         printf STDERR "DEBUG: %s - %04d: %s = %s\n", __PACKAGE__, __LINE__, $oidmap{$oid_ref}->{oid} . "." . $index, $val if ( $self->{debug} >= 2 );
         $self->{es_data}->{$oidmap{$oid_ref}->{oid} . "." . $index}->{val} = $val;
@@ -297,8 +295,10 @@ sub _get_oid ($$) {
   # zalEsMaster is true if the master node name equals the local
   # node name. TODO: make dealing with such cases more generic
   if ( $oid_str eq "zalEsMaster" ) {
-     $val = ($val eq $node_stats->{uuid} ? "true" : "false");
-     $val = $truthnr{$val};
+    $val = ($val eq $node_stats->{uuid} ? "true" : "false");
+    # boolean values are returned as true and false and transformed to
+    # numeric values as defined by the TruthValue ::= TEXTUAL-CONVENTION
+    $val = $truthnr{$val};
   }
 
   $self->{es_data}->{$oid_num}->{val} = $val;
