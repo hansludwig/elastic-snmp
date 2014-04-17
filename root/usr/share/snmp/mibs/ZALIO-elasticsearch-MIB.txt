@@ -2,7 +2,7 @@ ZALIO-elasticsearch-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
     OBJECT-TYPE, MODULE-IDENTITY,
-    Integer32, Counter64, Gauge32
+    Integer32, Counter32, Gauge32
         FROM SNMPv2-SMI
 
    TEXTUAL-CONVENTION, DisplayString, TruthValue
@@ -82,7 +82,7 @@ zalEsNrDataNodes OBJECT-TYPE -- Cluster
     ::= { zalEsCluster 4 }
 
 zalEsDocsCount OBJECT-TYPE -- Cluster
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -90,7 +90,7 @@ zalEsDocsCount OBJECT-TYPE -- Cluster
     ::= { zalEsCluster 5 }
 
 zalEsDocsDel OBJECT-TYPE -- Cluster
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -98,7 +98,7 @@ zalEsDocsDel OBJECT-TYPE -- Cluster
     ::= { zalEsCluster 6 }
 
 zalEsStoreSize OBJECT-TYPE -- Cluster
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -153,7 +153,7 @@ zalEsNodeName OBJECT-TYPE -- Node
     ::= { zalEsNode 1 }
 
 zalEsIndexTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -161,7 +161,7 @@ zalEsIndexTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 2 }
 
 zalEsIndexTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -169,7 +169,7 @@ zalEsIndexTime OBJECT-TYPE -- Node
     ::= { zalEsNode 3 }
 
 zalEsFlushTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -177,7 +177,7 @@ zalEsFlushTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 4 }
 
 zalEsFlushTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -185,7 +185,7 @@ zalEsFlushTime OBJECT-TYPE -- Node
     ::= { zalEsNode 5 }
 
 zalEsThrottleTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -193,7 +193,7 @@ zalEsThrottleTime OBJECT-TYPE -- Node
     ::= { zalEsNode 6 }
 
 zalEsDeleteTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -201,7 +201,7 @@ zalEsDeleteTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 7 }
 
 zalEsDeleteTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -209,7 +209,7 @@ zalEsDeleteTime OBJECT-TYPE -- Node
     ::= { zalEsNode 8 }
 
 zalEsGetTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -217,7 +217,7 @@ zalEsGetTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 9 }
 
 zalEsGetTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -225,7 +225,7 @@ zalEsGetTime OBJECT-TYPE -- Node
     ::= { zalEsNode 10 }
 
 zalEsExistsTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -233,7 +233,7 @@ zalEsExistsTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 11 }
 
 zalEsExistsTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -241,7 +241,7 @@ zalEsExistsTime OBJECT-TYPE -- Node
     ::= { zalEsNode 12 }
 
 zalEsMissingTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -249,7 +249,7 @@ zalEsMissingTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 13 }
 
 zalEsMissingTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -257,7 +257,7 @@ zalEsMissingTime OBJECT-TYPE -- Node
     ::= { zalEsNode 14 }
 
 zalEsQueryTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -265,7 +265,7 @@ zalEsQueryTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 15 }
 
 zalEsQueryTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -273,7 +273,7 @@ zalEsQueryTime OBJECT-TYPE -- Node
     ::= { zalEsNode 16 }
 
 zalEsFetchTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -281,7 +281,7 @@ zalEsFetchTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 17 }
 
 zalEsFetchTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -289,7 +289,7 @@ zalEsFetchTime OBJECT-TYPE -- Node
     ::= { zalEsNode 18 }
 
 zalEsMergeTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -297,7 +297,7 @@ zalEsMergeTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 19 }
 
 zalEsMergeTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -305,7 +305,7 @@ zalEsMergeTime OBJECT-TYPE -- Node
     ::= { zalEsNode 20 }
 
 zalEsRefreshTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -313,7 +313,7 @@ zalEsRefreshTotal OBJECT-TYPE -- Node
     ::= { zalEsNode 21 }
 
 zalEsRefreshTime OBJECT-TYPE -- Node
-    SYNTAX        Counter64
+    SYNTAX        Counter32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
@@ -555,7 +555,13 @@ zalEsNodeGroup OBJECT-GROUP
              zalEsGetMisDel,
              zalEsGetTmDel,
              zalEsGetExTmDel,
-             zalEsGetMisTmDel
+             zalEsGetMisTmDel,
+             zalEsJvmHeap,
+             zalEsJvmHeapPerc,
+             zalEsJvmHeapCommit,
+             zalEsJvmHeapMax,
+             zalEsJvmNonHeap,
+             zalEsJvmNonHeapCommit
             }
     STATUS  current
     DESCRIPTION
@@ -603,7 +609,7 @@ ZalEsIndicesEntry ::= SEQUENCE {
 -- =======================================================
 
 zalEsIndicesIndex OBJECT-TYPE
-    SYNTAX        Integer32
+    SYNTAX        Integer32 (0..2147483647)
     MAX-ACCESS    not-accessible
     STATUS        current
     DESCRIPTION
@@ -626,81 +632,81 @@ zalEsIndName OBJECT-TYPE
         "{name}"
     ::= { zalEsIndicesEntry 3 }
 
---zalEsShrdStatus OBJECT-TYPE
---    SYNTAX        EsStatusTC
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 4 }
---
---zalEsShrdActive OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 5 }
---
---zalEsShrdReloc OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 6 }
---
---zalEsShrdInit OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 7 }
---
---zalEsShrdUnas OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 8 }
---
---zalEsShrdPrim OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 9 }
---
---zalEsShrdRepl OBJECT-TYPE
---    SYNTAX        Integer32
---    MAX-ACCESS    read-only
---    STATUS        current
---    DESCRIPTION
---        "to be filled in"
---    ::= { zalEsIndicesEntry 10 }
+zalEsShrdStatus OBJECT-TYPE
+    SYNTAX        EsStatusTC
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{status}"
+    ::= { zalEsIndicesEntry 4 }
+
+zalEsShrdActive OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{active_shards}"
+    ::= { zalEsIndicesEntry 5 }
+
+zalEsShrdReloc OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{relocating_shards}"
+    ::= { zalEsIndicesEntry 6 }
+
+zalEsShrdInit OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{initializing_shards}"
+    ::= { zalEsIndicesEntry 7 }
+
+zalEsShrdUnas OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{unassigned_shards}"
+    ::= { zalEsIndicesEntry 8 }
+
+zalEsShrdPrim OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{active_primary_shards}"
+    ::= { zalEsIndicesEntry 9 }
+
+zalEsShrdRepl OBJECT-TYPE
+    SYNTAX        Integer32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "{number_of_replicas}"
+    ::= { zalEsIndicesEntry 10 }
 
 -- Indices group definition
 
 zalEsIndicesGroup OBJECT-GROUP
     OBJECTS {
              zalEsIndStatus,
-             zalEsIndName
+             zalEsIndName,
+             zalEsShrdStatus,
+             zalEsShrdActive,
+             zalEsShrdReloc,
+             zalEsShrdInit,
+             zalEsShrdUnas,
+             zalEsShrdPrim,
+             zalEsShrdRepl
             }
     STATUS  current
     DESCRIPTION
             "A collection of objects providing basic instrumentation and
             control of an elasticsearch node."
     ::= { zalGroups 3 }
---             zalEsShrdStatus,
---             zalEsShrdActive,
---             zalEsShrdReloc,
---             zalEsShrdInit,
---             zalEsShrdUnas,
---             zalEsShrdPrim,
---             zalEsShrdRepl
 
  
 -- Compliance

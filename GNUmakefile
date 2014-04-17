@@ -34,6 +34,14 @@ $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.con
 	cd $(@D); \
 	mib2c -c $(PWD)/$< $(OID)
 
+root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt: ZALIO-elasticsearch-MIB
+
+ZALIO-elasticsearch-MIB:
+	@$(ING-MESSAGE) lint $@
+	$(ATSIGN)\
+	export SMIPATH=root/usr/share/snmp/mibs; \
+	smilint $@ 2>&1 | sed 's|^|>>> |'
+
 $(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
 
 # make will not complain if this file does not exist, however
