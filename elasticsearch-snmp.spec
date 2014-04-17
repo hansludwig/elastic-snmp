@@ -2,8 +2,8 @@
 #
 Summary: SNMP agent extensions for elasticsearch
 Name: elasticsearch-snmp
-Version: 1.0.0
-Release: 4
+Version: 0.1.0
+Release: 10
 #Copyright: GPL
 Packager: ortecin GmbH <hans.riethmann@ortecin.ch>
 Vendor: zal.io
@@ -11,11 +11,11 @@ URL: http://www.zal.io
 License: proprietary
 Group: System Environment/Base
 AutoReqProv: no
-Requires: net-snmp-perl perl-libwww-perl perl-JSON-XS
+Requires: net-snmp-perl perl-libwww-perl perl-JSON-XS daemonize
 BuildArch: noarch
 BuildRoot: %_topdir/BUILDROOT/%{name}
 Prefix: /opt
-%define service elasticsearch-snmpd
+%define service esagentx
 
 %description
 This agent gets the information from an elasticsearch cluster / node
@@ -55,6 +55,14 @@ if [ "%{service}" ]; then
   # status returns 0 if the service is running, we only restart it if it is
   service %{service} status > /dev/null && service %{service} stop
   service %{service} start
+fi
+
+%preun
+if [ "$1" = 0 ]; then
+  if [ "%{service}" ]; then
+    service %{service} stop
+    chkconfig --del %{service}
+  fi
 fi
 
 %postun
