@@ -1,0 +1,12 @@
+#!/usr/bin/perl -n -w
+
+# Make sure OID's are continously numbered
+
+BEGIN {
+  $node = 1;
+  $indices = 1;
+};
+
+s/{ zalEsNode \d+ }/{ zalEsNode $node }/ && $node++;
+s/{ zalEsIndicesEntry \d+ }/{ zalEsIndicesEntry $indices }/ && $indices++;
+print;

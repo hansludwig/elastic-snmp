@@ -23,8 +23,8 @@ if [ -f /etc/rc.d/init.d/functions ]; then
 fi
 
 exec="/opt/elasticsearch-snmp/bin/es-agentx"
-prog="es-agentx"
-pidfile=/var/run/elasticsearch/${prog}.pid
+prog="esagentx"
+pidfile=/var/run/${prog}.pid
 
 [ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
 
@@ -35,9 +35,8 @@ start() {
     [ -x $exec ] || exit 5
     echo -n $"Starting $prog: "
     # if not running, start it up here, usually something like "daemon $exec"
-    daemon ${ES_USER:+--user $ES_USER} --pidfile $pidfile $exec
+    daemonize ${ES_USER:+-u $ES_USER} -p $pidfile -l $lockfile $exec
     retval=$?
-    echo
     [ $retval -eq 0 ] && touch $lockfile
     return $retval
 }
@@ -47,7 +46,6 @@ stop() {
     # stop it here, often "killproc $prog"
     killproc -p $pidfile -d 20 $prog
     retval=$?
-    echo
     [ $retval -eq 0 ] && rm -f $lockfile
     return $retval
 }
@@ -78,11 +76,13 @@ rh_status_q() {
 case "$1" in
     start)
         rh_status_q && exit 0
-        $1
+        $1 && success || failure
+        echo
         ;;
     stop)
         rh_status_q || exit 0
-        $1
+        $1 && success || failure
+        echo
         ;;
     restart)
         $1
