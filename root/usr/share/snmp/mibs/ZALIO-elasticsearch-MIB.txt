@@ -352,7 +352,7 @@ zalEsProcCpuUsr OBJECT-TYPE -- Node
         "node_stats->{process}->{cpu}->{user_in_millis}"
     ::= { zalEsNode 26 }
 
-zalEsJvmHeap OBJECT-TYPE -- Node
+zalEsJvmHp OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -360,7 +360,7 @@ zalEsJvmHeap OBJECT-TYPE -- Node
         "node_stats->{jvm}->{mem}->{heap_used_in_bytes}"
     ::= { zalEsNode 27 }
 
-zalEsJvmHeapPerc OBJECT-TYPE -- Node
+zalEsJvmHpPerc OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -368,7 +368,7 @@ zalEsJvmHeapPerc OBJECT-TYPE -- Node
         "node_stats->{jvm}->{mem}->{heap_used_percent}"
     ::= { zalEsNode 28 }
 
-zalEsJvmHeapCommit OBJECT-TYPE -- Node
+zalEsJvmHpCmt OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -376,7 +376,7 @@ zalEsJvmHeapCommit OBJECT-TYPE -- Node
         "node_stats->{jvm}->{mem}->{heap_committed_in_bytes}"
     ::= { zalEsNode 29 }
 
-zalEsJvmHeapMax OBJECT-TYPE -- Node
+zalEsJvmHpMax OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -384,7 +384,7 @@ zalEsJvmHeapMax OBJECT-TYPE -- Node
         "node_stats->{jvm}->{mem}->{heap_max_in_bytes}"
     ::= { zalEsNode 30 }
 
-zalEsJvmNonHeap OBJECT-TYPE -- Node
+zalEsJvmNonHp OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -392,7 +392,7 @@ zalEsJvmNonHeap OBJECT-TYPE -- Node
         "node_stats->{jvm}->{mem}->{non_heap_used_in_bytes}"
     ::= { zalEsNode 31 }
 
-zalEsJvmNonHeapCommit OBJECT-TYPE -- Node
+zalEsJvmNonHpCmt OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
@@ -556,12 +556,12 @@ zalEsNodeGroup OBJECT-GROUP
              zalEsGetTmDel,
              zalEsGetExTmDel,
              zalEsGetMisTmDel,
-             zalEsJvmHeap,
-             zalEsJvmHeapPerc,
-             zalEsJvmHeapCommit,
-             zalEsJvmHeapMax,
-             zalEsJvmNonHeap,
-             zalEsJvmNonHeapCommit
+             zalEsJvmHp,
+             zalEsJvmHpPerc,
+             zalEsJvmHpCmt,
+             zalEsJvmHpMax,
+             zalEsJvmNonHp,
+             zalEsJvmNonHpCmt
             }
     STATUS  current
     DESCRIPTION
