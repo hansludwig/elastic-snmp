@@ -34,6 +34,15 @@ $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.con
 	cd $(@D); \
 	mib2c -c $(PWD)/$< $(OID)
 
+tools/elasticsearch.xml: tools/mib2c.opennms.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt 
+	@$(ING-MESSAGE) creat $@
+	$(ATSIGN)\
+	export MIBS=ALL; \
+        export MIBDIRS="+$(PWD)/root/usr/share/snmp/mibs"; \
+	mkdir -p $(@D); \
+	cd $(@D); \
+	mib2c -c $(PWD)/$< $(OID)
+
 root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt: ZALIO-elasticsearch-MIB
 
 ZALIO-elasticsearch-MIB:
