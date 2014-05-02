@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<datacollection-group name="Elasticsearch Node" create_date="Fri May  2 13:45:59 2014">
+
+  <group name="es-node-stats" ifType="ignore">
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.1"           instance='0' alias="zalEsStatus"         type="integer" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.2"           instance='0' alias="zalEsClusterName"    type="string" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.3"           instance='0' alias="zalEsNrNodes"        type="integer" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.4"           instance='0' alias="zalEsNrDataNodes"    type="integer" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.5"           instance='0' alias="zalEsDocsCount"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.6"           instance='0' alias="zalEsDocsDel"        type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.7"           instance='0' alias="zalEsStoreSize"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.8"           instance='0' alias="zalEsStoreThr"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.1.9"           instance='0' alias="zalEsMaster"         type="integer" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.1"           instance='0' alias="zalEsNodeName"       type="string" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.2"           instance='0' alias="zalEsStrSize"        type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.3"           instance='0' alias="zalEsStrThrtlTm"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.4"           instance='0' alias="zalEsStrThrtlTmDel"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.5"           instance='0' alias="zalEsIndTotal"       type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.6"           instance='0' alias="zalEsIndTime"        type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.7"           instance='0' alias="zalEsIndTimeDel"     type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.8"           instance='0' alias="zalEsIndDel"         type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.9"           instance='0' alias="zalEsIndDelTotal"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.10"          instance='0' alias="zalEsIndDelTime"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.11"          instance='0' alias="zalEsIndDelTimeDel"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.12"          instance='0' alias="zalEsIndDeleteDel"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.13"          instance='0' alias="zalEsGetTotal"       type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.14"          instance='0' alias="zalEsGetTime"        type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.15"          instance='0' alias="zalEsGetTimeDel"     type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.16"          instance='0' alias="zalEsExistsTotal"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.17"          instance='0' alias="zalEsExistsTime"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.18"          instance='0' alias="zalEsExistsTimeDel"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.19"          instance='0' alias="zalEsMissingTotal"   type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.20"          instance='0' alias="zalEsMissingTime"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.21"          instance='0' alias="zalEsMissingTimeDel" type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.22"          instance='0' alias="zalEsGetDel"         type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.23"          instance='0' alias="zalEsOpenCont"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.24"          instance='0' alias="zalEsQueryDel"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.25"          instance='0' alias="zalEsQueryTotal"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.26"          instance='0' alias="zalEsQueryTime"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.27"          instance='0' alias="zalEsQueryTimeDel"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.28"          instance='0' alias="zalEsFetchDel"       type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.29"          instance='0' alias="zalEsFetchTotal"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.30"          instance='0' alias="zalEsFetchTime"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.31"          instance='0' alias="zalEsFetchTimeDel"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.32"          instance='0' alias="zalEsMergeTotal"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.33"          instance='0' alias="zalEsMergeTime"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.34"          instance='0' alias="zalEsMergeTimeDel"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.35"          instance='0' alias="zalEsRefreshTotal"   type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.36"          instance='0' alias="zalEsRefreshTime"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.37"          instance='0' alias="zalEsRefreshTimeDel" type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.38"          instance='0' alias="zalEsFlushTotal"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.39"          instance='0' alias="zalEsFlushTime"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.40"          instance='0' alias="zalEsFlushTimeDel"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.41"          instance='0' alias="zalEsWarmer"         type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.42"          instance='0' alias="zalEsWarmerTotal"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.43"          instance='0' alias="zalEsWarmerTime"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.44"          instance='0' alias="zalEsWarmerTimeDel"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.45"          instance='0' alias="zalEsFilterCache"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.46"          instance='0' alias="zalEsFilterCacheEv"  type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.47"          instance='0' alias="zalEsIdCache"        type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.48"          instance='0' alias="zalEsFieldData"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.49"          instance='0' alias="zalEsFieldDataEv"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.50"          instance='0' alias="zalEsPercTotal"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.51"          instance='0' alias="zalEsPercTime"       type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.52"          instance='0' alias="zalEsPercTimeDel"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.53"          instance='0' alias="zalEsPercolate"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.54"          instance='0' alias="zalEsPercMem"        type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.55"          instance='0' alias="zalEsPercQuer"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.56"          instance='0' alias="zalEsCompletion"     type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.57"          instance='0' alias="zalEsTranslOper"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.58"          instance='0' alias="zalEsTranslog"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.59"          instance='0' alias="zalEsProcFileDescr"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.60"          instance='0' alias="zalEsProcCpuPerc"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.61"          instance='0' alias="zalEsProcCpuSys"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.62"          instance='0' alias="zalEsProcCpuSysDel"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.63"          instance='0' alias="zalEsProcCpuUsr"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.64"          instance='0' alias="zalEsProcCpuUsrDel"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.65"          instance='0' alias="zalEsProcMemRes"     type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.66"          instance='0' alias="zalEsProcMemShr"     type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.67"          instance='0' alias="zalEsJvmHp"          type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.68"          instance='0' alias="zalEsJvmHpPerc"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.69"          instance='0' alias="zalEsJvmHpCmt"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.70"          instance='0' alias="zalEsJvmHpMax"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.71"          instance='0' alias="zalEsJvmNonHp"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.72"          instance='0' alias="zalEsJvmNonHpCmt"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.73"          instance='0' alias="zalEsTcpAOpen"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.74"          instance='0' alias="zalEsTcpPOpen"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.75"          instance='0' alias="zalEsTcpEstabl"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.76"          instance='0' alias="zalEsTcpInSegs"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.77"          instance='0' alias="zalEsTcpOutSegs"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.78"          instance='0' alias="zalEsTcpRetSegs"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.79"          instance='0' alias="zalEsTcpEstReset"    type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.80"          instance='0' alias="zalEsTcpAttmtFails"  type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.81"          instance='0' alias="zalEsTcpInErrs"      type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.82"          instance='0' alias="zalEsTcpOutRsts"     type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.83"          instance='0' alias="zalEsFsTotal"        type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.84"          instance='0' alias="zalEsFsFree"         type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.85"          instance='0' alias="zalEsFsAvail"        type="counter" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.86"          instance='0' alias="zalEsFsDiskRd"       type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.87"          instance='0' alias="zalEsFsDiskWrt"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.88"          instance='0' alias="zalEsFsDiskRdSize"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.89"          instance='0' alias="zalEsFsDiskWrtSize"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.90"          instance='0' alias="zalEsFsDiskIoSize"   type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.91"          instance='0' alias="zalEsFsDiskQueue"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.92"          instance='0' alias="zalEsFsDiskSvcTime"  type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.95"          instance='0' alias="zalEsTrspRxDel"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.96"          instance='0' alias="zalEsTrspTxDel"      type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.97"          instance='0' alias="zalEsTrspRxSzDel"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.98"          instance='0' alias="zalEsTrspTxSzDel"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.99"          instance='0' alias="zalEsHttpCurOpen"    type="gauge" />
+    <mibObj oid=".1.3.6.1.4.1.43278.10.10.2.100"         instance='0' alias="zalEsHttpTotOpen"    type="counter" />
+  </group>
+
+  <systemDef name="elasticsearch - esagenx">
+    <sysoidMask>.1.3.6.1.4.1.8072.3.2.</sysoidMask>
+    <collect>
+      <includeGroup>es-node-stats</includeGroup>
+    </collect>
+  </systemDef>
+</datacollection-group>
+
+
