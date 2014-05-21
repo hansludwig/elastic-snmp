@@ -11,6 +11,7 @@ RELOC		:= reloc
 DESTDIR		 =
 CONFIG_FILES	 = $(PREFIX)/$(NAME)/etc/elasticsearch-snmp.conf \
                    $(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm \
+                   $(PREFIX)/$(NAME)/opennms/elasticsearch.xml \
                    /etc/snmp/snmp.conf \
                    /etc/snmp/snmpd.local.conf
 CONFIG_DIRS	 = 
@@ -24,16 +25,9 @@ CODE_DIRS	 =
 all::
 
 mib: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
-opennms: opennms/datacollection/elasticsearch.xml
 
-opennms/datacollection/elasticsearch.xml: tools/mib2c.opennms.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt
-	@$(ING-MESSAGE) creat $@
-	$(ATSIGN)\
-	export MIBS=ALL; \
-        export MIBDIRS="+$(PWD)/root/usr/share/snmp/mibs"; \
-	mkdir -p $(@D); \
-	cd $(@D); \
-	mib2c -c $(PWD)/$< $(OID)
+salt: $(RELOC)/$(NAME)/opennms/elasticsearch.xml
+	scp $< oti-5701:/home/salt/prod/service/monitoring/files/datacollection_elasticsearch.xml
 
 $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt 
 	@$(ING-MESSAGE) creat $@
@@ -44,7 +38,9 @@ $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.con
 	cd $(@D); \
 	mib2c -c $(PWD)/$< $(OID)
 
-tools/elasticsearch.xml: tools/mib2c.opennms.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt 
+$(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
+
+$(RELOC)/$(NAME)/opennms/elasticsearch.xml: tools/mib2c.opennms.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt
 	@$(ING-MESSAGE) creat $@
 	$(ATSIGN)\
 	export MIBS=ALL; \
@@ -53,6 +49,8 @@ tools/elasticsearch.xml: tools/mib2c.opennms.conf root/usr/share/snmp/mibs/ZALIO
 	cd $(@D); \
 	mib2c -c $(PWD)/$< $(OID)
 
+$(PREFIX)/$(NAME)/opennms/elasticsearch.xml: $(RELOC)/$(NAME)/opennms/elasticsearch.xml
+
 root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt: ZALIO-elasticsearch-MIB
 
 ZALIO-elasticsearch-MIB:
@@ -60,8 +58,6 @@ ZALIO-elasticsearch-MIB:
 	$(ATSIGN)\
 	export SMIPATH=root/usr/share/snmp/mibs; \
 	smilint $@ 2>&1 | sed 's|^|>>> |'
-
-$(PREFIX)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
 
 # make will not complain if this file does not exist, however
 # without this things wont work! Makw sure it's there!
@@ -78,5 +74,6 @@ clean::
 	$(RM) *.tmp
 	$(RM) debug*.list
 	$(RM) files.lst
-	$(RM)r reloc/$(NAME)/lib/SNMP/elasticsearch
+	$(RM)r $(RELOC)/$(NAME)/lib/SNMP/elasticsearch
+	$(RM) $(RELOC)/$(NAME)/opennms/elasticsearch.xml
 

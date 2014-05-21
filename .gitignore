@@ -1,1 +1,2 @@
 reloc/elasticsearch-snmp/lib/SNMP/elasticsearch/*
+reloc/elasticsearch-snmp/opennms/elasticsearch.xml
