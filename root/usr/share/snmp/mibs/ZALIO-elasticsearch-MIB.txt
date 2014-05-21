@@ -541,7 +541,7 @@ zalEsFieldData OBJECT-TYPE -- Node
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "node_stats->{indices}->{field_data}->{memory_size_in_bytes}"
+        "node_stats->{indices}->{fielddata}->{memory_size_in_bytes}"
     ::= { zalEsNode 50 }
 
 zalEsFieldDataEv OBJECT-TYPE -- Node
@@ -549,7 +549,7 @@ zalEsFieldDataEv OBJECT-TYPE -- Node
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "node_stats->{indices}->{field_data}->{evictions}"
+        "node_stats->{indices}->{fielddata}->{evictions}"
     ::= { zalEsNode 51 }
 
 zalEsPercTotal OBJECT-TYPE -- Node
