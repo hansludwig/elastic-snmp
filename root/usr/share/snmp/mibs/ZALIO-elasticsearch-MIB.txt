@@ -817,93 +817,13 @@ zalEsTcpOutRsts OBJECT-TYPE -- Node
         "node_stats->{network}->{tcp}->{out_rsts}"
     ::= { zalEsNode 84 }
 
-zalEsFsTotal OBJECT-TYPE -- Node
-    SYNTAX        Counter32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{total_in_bytes}"
-    ::= { zalEsNode 85 }
-
-zalEsFsFree OBJECT-TYPE -- Node
-    SYNTAX        Counter32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{free_in_bytes}"
-    ::= { zalEsNode 86 }
-
-zalEsFsAvail OBJECT-TYPE -- Node
-    SYNTAX        Counter32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{available_in_bytes}"
-    ::= { zalEsNode 87 }
-
-zalEsFsDiskRd OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_reads}"
-    ::= { zalEsNode 88 }
-
-zalEsFsDiskWrt OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_writes}"
-    ::= { zalEsNode 89 }
-
-zalEsFsDiskRdSize OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_read_size_in_bytes}"
-    ::= { zalEsNode 90 }
-
-zalEsFsDiskWrtSize OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_write_size_in_bytes}"
-    ::= { zalEsNode 91 }
-
-zalEsFsDiskIoSize OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_io_size_in_bytes}"
-    ::= { zalEsNode 92 }
-
-zalEsFsDiskQueue OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_queue}"
-    ::= { zalEsNode 93 }
-
-zalEsFsDiskSvcTime OBJECT-TYPE -- Node
-    SYNTAX        Gauge32
-    MAX-ACCESS    read-only
-    STATUS        current
-    DESCRIPTION
-        "node_stats->{fs}->{data}->{disk_service_time}"
-    ::= { zalEsNode 94 }
-
 zalEsTrspRxDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{rx_count}"
-    ::= { zalEsNode 95 }
+    ::= { zalEsNode 85 }
 
 zalEsTrspTxDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -911,7 +831,7 @@ zalEsTrspTxDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{tx_count}"
-    ::= { zalEsNode 96 }
+    ::= { zalEsNode 86 }
 
 zalEsTrspRxSzDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -919,7 +839,7 @@ zalEsTrspRxSzDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{rx_size_in_bytes}"
-    ::= { zalEsNode 97 }
+    ::= { zalEsNode 87 }
 
 zalEsTrspTxSzDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -927,7 +847,7 @@ zalEsTrspTxSzDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{tx_size_in_bytes}"
-    ::= { zalEsNode 98 }
+    ::= { zalEsNode 88 }
 
 zalEsHttpCurOpen OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -935,7 +855,7 @@ zalEsHttpCurOpen OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{http}->{current_open}"
-    ::= { zalEsNode 99 }
+    ::= { zalEsNode 89 }
 
 zalEsHttpTotOpen OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -943,7 +863,7 @@ zalEsHttpTotOpen OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{http}->{total_opened}"
-    ::= { zalEsNode 100 }
+    ::= { zalEsNode 90 }
 
 -- Node group definition
 
@@ -1033,16 +953,6 @@ zalEsNodeGroup OBJECT-GROUP
               zalEsTcpAttmtFails,
               zalEsTcpInErrs,
               zalEsTcpOutRsts,
-              zalEsFsTotal,
-              zalEsFsFree,
-              zalEsFsAvail,
-              zalEsFsDiskRd,
-              zalEsFsDiskWrt,
-              zalEsFsDiskRdSize,
-              zalEsFsDiskWrtSize,
-              zalEsFsDiskIoSize,
-              zalEsFsDiskQueue,
-              zalEsFsDiskSvcTime,
               zalEsTrspRxDel,
               zalEsTrspTxDel,
               zalEsTrspRxSzDel,
