@@ -381,7 +381,7 @@ zalEsFetchTotalDel OBJECT-TYPE -- Node
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
-        "node_stats->{indices}->{search}->{fetch_current}"
+        "node_stats->{indices}->{search}->{fetch_total}"
     ::= { zalEsNode 30 }
 
 zalEsFetchTotal OBJECT-TYPE -- Node
