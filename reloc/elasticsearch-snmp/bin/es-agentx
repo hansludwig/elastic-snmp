@@ -22,7 +22,7 @@ my $es = ();
 sub handle_stats {
   my ($handler, $registration_info, $request_info, $requests) = @_;
   $es = SNMP::elasticsearch->new(\%data) unless ( ref($es) eq "SNMP::elasticsearch" );
-  $es->update_stats;    	# Maybe we should do this in a thread...
+  $es->update_stats or return(); # Maybe we should do this in a thread...
 
   for ( my $request = $requests; $request; $request = $request->next() ) {
     $SNMP::use_numeric = 1;

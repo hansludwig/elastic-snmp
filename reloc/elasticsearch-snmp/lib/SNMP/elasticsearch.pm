@@ -101,9 +101,20 @@ sub update_stats {
   $nodes_stats = $nodes_stats;
   $node_stats = $node_stats;
 
-  return (1) unless ( $self->expired() );
+  return(1) unless ( $self->expired() );
 
-  $self->load();
+  my $jsonstring = ();
+  my @refs = ();
+  foreach my $ref ("cluster_health", "cluster_state", "cluster_stats", "nodes_stats") {
+    # Get information from elasticsearch via REST interface
+    $jsonstring = $self->_get_json($ref) or last;
+    push(@refs, decode_json($jsonstring)); 
+  }
+
+  return(0) unless ( $jsonstring );
+
+  ($cluster_health, $cluster_state, $cluster_stats, $nodes_stats) = @refs;
+  $self->{last_load} = time();
 
   # Get the node statistics for the local node
   $host = (defined($self->{url}->{host}) && 
@@ -180,19 +191,6 @@ sub update_stats {
   return(1);
 }
 
-sub load {
-  my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
-  printf STDERR "DEBUG: %s - %04d: load(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
-
-  # Get information from elasticsearch via REST interface
-  $cluster_health = decode_json($self->_get_json("cluster_health"));
-  $cluster_state = decode_json($self->_get_json("cluster_state"));
-  $cluster_stats = decode_json($self->_get_json("cluster_stats"));
-  $nodes_stats = decode_json($self->_get_json("nodes_stats"));
-
-  $self->{last_load} = time();
-}
-
 sub oid {
   my $self = (ref($_[0]) eq __PACKAGE__ ? shift() : "");
   printf STDERR "DEBUG: %s - %04d: oid(%s)\n", __PACKAGE__, __LINE__, join(", ", @_) if ( $self->{debug} >= 5 );
@@ -253,6 +251,7 @@ sub _calculate ($) {
   %{$last_nodes_stats} = %{$nodes_stats} unless ( %{$last_nodes_stats} );
   %{$last_node_stats} = %{$node_stats} unless ( %{$last_node_stats} );
 
+  return() unless ( %{$node_stats} && %{$last_node_stats} );
   # elapsed time in seconds, sys time is returned in millies
   $elapsed = ($node_stats->{process}->{timestamp} - 
              $last_node_stats->{process}->{timestamp}) / 1000;
@@ -263,7 +262,10 @@ sub _calculate ($) {
   $last = eval($last);
   $current = eval($oidmap{$oid}->{jref});
   
-  return(($current - $last) / $elapsed * $self->{calc_steps});
+  #if ( defined($current) && defined($last) && defined($elapsed) ) {
+    return(($current - $last) / $elapsed * $self->{calc_steps});
+  #}
+  #return();
 }
 
 sub _get_oid ($$) {
@@ -287,7 +289,6 @@ sub _get_oid ($$) {
   $val = ($oid_str =~ /Del$/ ? 
           $self->_calculate($oid_str) :
           eval($oidmap{$oid_str}->{jref}));
-
   # ES stati are returned as red green yellow and transformed to
   # numeric values as defined by the EsStatusTC ::= TEXTUAL-CONVENTION
   $val = $statusnr{$val} if ( defined($statusnr{$val}) );
@@ -318,9 +319,9 @@ sub _get_json ($) {
   $uri->port($self->{url}->{port}) if ( defined($self->{url}->{port}) );
 
   printf STDERR "DEBUG: %s - %04d: reloading $uri\n", __PACKAGE__, __LINE__ if ( $self->{debug} );
-  $json = get($uri) or die "$!";
+  $json = get($uri);
 
-  return($json);
+  return($json ? $json : ());
 }
 
 1;

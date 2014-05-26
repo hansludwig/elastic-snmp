@@ -2,8 +2,8 @@
 #
 Summary: SNMP agent extensions for elasticsearch
 Name: elasticsearch-snmp
-Version: 0.2.0
-Release: 2
+Version: 0.3.0
+Release: 0
 #Copyright: GPL
 Packager: ortecin GmbH <hans.riethmann@ortecin.ch>
 Vendor: zal.io
