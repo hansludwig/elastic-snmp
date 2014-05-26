@@ -1,4 +1,4 @@
-#!/usr/bin/env perl
+#!/usr/bin/perl -w
 
 use strict;
 use NetSNMP::OID;
@@ -13,7 +13,9 @@ use Data::Dumper;
 use SNMP::elasticsearch;
 do "elasticsearch-snmp.conf";
 
-my %data = ();			# Cache
+$0 = (split('/', $0))[-1]; # make sure we show up in the process table
+                           # with the script name and not as 'perl ...'
+my %data = ();             # Cache
 my $es = ();
 
 # Handle request
