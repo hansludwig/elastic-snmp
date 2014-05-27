@@ -737,13 +737,29 @@ zalEsJvmNonHpCmt OBJECT-TYPE -- Node
         "node_stats->{jvm}->{mem}->{non_heap_committed_in_bytes}"
     ::= { zalEsNode 74 }
 
+zalEsJvmThreads OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{threads}->{count}"
+    ::= { zalEsNode 75 }
+
+zalEsJvmThreadsPeak OBJECT-TYPE -- Node
+    SYNTAX        Gauge32
+    MAX-ACCESS    read-only
+    STATUS        current
+    DESCRIPTION
+        "node_stats->{jvm}->{threads}->{peak_count}"
+    ::= { zalEsNode 76 }
+
 zalEsTcpAOpen OBJECT-TYPE -- Node
     SYNTAX        Gauge32
     MAX-ACCESS    read-only
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{active_opens}"
-    ::= { zalEsNode 75 }
+    ::= { zalEsNode 77 }
 
 zalEsTcpPOpen OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -751,7 +767,7 @@ zalEsTcpPOpen OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{passive_opens}"
-    ::= { zalEsNode 76 }
+    ::= { zalEsNode 78 }
 
 zalEsTcpEstabl OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -759,7 +775,7 @@ zalEsTcpEstabl OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{curr_estab}"
-    ::= { zalEsNode 77 }
+    ::= { zalEsNode 79 }
 
 zalEsTcpInSegs OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -767,7 +783,7 @@ zalEsTcpInSegs OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{in_segs}"
-    ::= { zalEsNode 78 }
+    ::= { zalEsNode 80 }
 
 zalEsTcpOutSegs OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -775,7 +791,7 @@ zalEsTcpOutSegs OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{out_segs}"
-    ::= { zalEsNode 79 }
+    ::= { zalEsNode 81 }
 
 zalEsTcpRetSegs OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -783,7 +799,7 @@ zalEsTcpRetSegs OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{retrans_segs}"
-    ::= { zalEsNode 80 }
+    ::= { zalEsNode 82 }
 
 zalEsTcpEstReset OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -791,7 +807,7 @@ zalEsTcpEstReset OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{estab_resets}"
-    ::= { zalEsNode 81 }
+    ::= { zalEsNode 83 }
 
 zalEsTcpAttmtFails OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -799,7 +815,7 @@ zalEsTcpAttmtFails OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{attempt_fails}"
-    ::= { zalEsNode 82 }
+    ::= { zalEsNode 84 }
 
 zalEsTcpInErrs OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -807,7 +823,7 @@ zalEsTcpInErrs OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{in_errs}"
-    ::= { zalEsNode 83 }
+    ::= { zalEsNode 85 }
 
 zalEsTcpOutRsts OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -815,7 +831,7 @@ zalEsTcpOutRsts OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{network}->{tcp}->{out_rsts}"
-    ::= { zalEsNode 84 }
+    ::= { zalEsNode 86 }
 
 zalEsTrspRxDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -823,7 +839,7 @@ zalEsTrspRxDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{rx_count}"
-    ::= { zalEsNode 85 }
+    ::= { zalEsNode 87 }
 
 zalEsTrspTxDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -831,7 +847,7 @@ zalEsTrspTxDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{tx_count}"
-    ::= { zalEsNode 86 }
+    ::= { zalEsNode 88 }
 
 zalEsTrspRxSzDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -839,7 +855,7 @@ zalEsTrspRxSzDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{rx_size_in_bytes}"
-    ::= { zalEsNode 87 }
+    ::= { zalEsNode 89 }
 
 zalEsTrspTxSzDel OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -847,7 +863,7 @@ zalEsTrspTxSzDel OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{transport}->{tx_size_in_bytes}"
-    ::= { zalEsNode 88 }
+    ::= { zalEsNode 90 }
 
 zalEsHttpCurOpen OBJECT-TYPE -- Node
     SYNTAX        Gauge32
@@ -855,7 +871,7 @@ zalEsHttpCurOpen OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{http}->{current_open}"
-    ::= { zalEsNode 89 }
+    ::= { zalEsNode 91 }
 
 zalEsHttpTotOpen OBJECT-TYPE -- Node
     SYNTAX        Counter32
@@ -863,7 +879,7 @@ zalEsHttpTotOpen OBJECT-TYPE -- Node
     STATUS        current
     DESCRIPTION
         "node_stats->{http}->{total_opened}"
-    ::= { zalEsNode 90 }
+    ::= { zalEsNode 92 }
 
 -- Node group definition
 
@@ -943,6 +959,8 @@ zalEsNodeGroup OBJECT-GROUP
               zalEsJvmHpMax,
               zalEsJvmNonHp,
               zalEsJvmNonHpCmt,
+              zalEsJvmThreads,
+              zalEsJvmThreadsPeak,
               zalEsTcpAOpen,
               zalEsTcpPOpen,
               zalEsTcpEstabl,
