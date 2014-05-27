@@ -27,7 +27,8 @@ all::
 mib: $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm
 
 salt: $(RELOC)/$(NAME)/opennms/elasticsearch.xml
-	scp $< oti-5701:/home/salt/prod/service/monitoring/files/datacollection_elasticsearch.xml
+	scp $< oti-5701:/home/salt/prod/service/monitoring/files/datacollection_elasticsearch.xml; \
+	scp root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt oti-5701:/home/salt/prod/service/monitoring/files
 
 $(RELOC)/$(NAME)/lib/SNMP/elasticsearch/oidmap.pm: tools/mib2c.elasticsearch.conf root/usr/share/snmp/mibs/ZALIO-elasticsearch-MIB.txt 
 	@$(ING-MESSAGE) creat $@
