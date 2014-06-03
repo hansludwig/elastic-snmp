@@ -119,9 +119,9 @@ sub update_stats {
   # Get the node statistics for the local node
   $host = (defined($self->{url}->{host}) && 
            $self->{url}->{host} ? $self->{url}->{host} : hostname());
-  $host = (split(/\.+/, $host))[0]; # Use non fully qualified hostname
+  $host = (split(/\.+/, $host))[0]; # strip to non fully qualified hostname
   foreach my $n (keys(%{$nodes_stats->{nodes}})) {
-    if ( $nodes_stats->{nodes}->{$n}->{host} eq $host ) {
+    if ( $nodes_stats->{nodes}->{$n}->{host} =~ /^($host|$host\..*)$/ ) {
        $node_stats = $nodes_stats->{nodes}->{$n};
        $node_stats->{uuid} = $n;
        last;
