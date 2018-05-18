@@ -1,0 +1,101 @@
+ATSIGN		 = @
+VERBOSE		 = yes
+RECURSIVE	 = if [ "$(MODULES)" ]; then for i in "$(MODULES)"; do _currdir=`pwd`; cd $$i; $(MAKE) ATSIGN=$(ATSIGN) $(MFLAGS) $(@); cd $$_currdir; done; fi
+RELOC		:= reloc
+#
+define SPACECOUNTER
+spccnt=$(MAKELEVEL); \
+while [ $$spccnt -gt 0 ]; do \
+	SPACE="$$SPACE  "; \
+	spccnt=`expr $$spccnt - 1`; \
+done
+endef
+#
+define ING-MESSAGE
+verbose(){ \
+	if [ "$(VERBOSE)" ]; then \
+		$(SPACECOUNTER); \
+		printf "$${SPACE}$${1}ing $$2\n"; \
+	fi; }; \
+verbose
+endef
+
+all:: $(MODULES)
+
+$(MODULES): .force
+	-$(ATSIGN)\
+	cd $@; \
+	$(MAKE) ATSIGN=$(ATSIGN) $(MFLAGS) $(MAKECMDGOALS)
+
+clean::
+	$(ATSIGN)\
+	$(RECURSIVE)
+
+clobber:: clean
+	$(ATSIGN)\
+	$(RECURSIVE)
+
+test:: .force
+	$(ATSIGN)\
+	$(RECURSIVE)
+
+files-list: .force
+	@$(ING-MESSAGE) creat $@
+	$(ATSIGN)\
+        echo $(DESTDIR); \
+	perl -e 'map { print "$$_\n" } qw($(subst $(DESTDIR),,$(CODE_FILES))); \
+	         map { print "%config %attr(0775, $(APPUSER), $(APPUSER)) $$_\n" } grep(/^\$(PREFIX)/, qw($(subst $(DESTDIR),,$(CONFIG_FILES)))); \
+	         map { print "%config $$_\n" } grep(!/^\$(PREFIX)/, qw($(subst $(DESTDIR),,$(CONFIG_FILES))))' > files.lst
+
+#
+# --- no changes below --
+# ..._DIR must be before ..._FILES or we end up with $(DESTDIR)
+# prepended twice
+CONFIG_DIRS	:= $(sort $(addprefix $(DESTDIR),$(CONFIG_DIRS) $(patsubst %/,%,$(dir $(CONFIG_FILES)))))
+CONFIG_FILES	:= $(addprefix $(DESTDIR),$(subst $(RELOC),$(PREFIX),$(CONFIG_FILES)))
+CONFIG_DIRECTIVE:= %config 
+
+CODE_DIRS	:= $(sort $(addprefix $(DESTDIR),$(CODE_DIRS) $(patsubst %/,%,$(dir $(CODE_FILES)))))
+CODE_FILES	:= $(addprefix $(DESTDIR),$(CODE_FILES))
+
+FILES		 = $(CONFIG_FILES) $(CODE_FILES)
+DIRS		 = $(CONFIG_DIRS) $(CODE_DIRS)
+
+install:: install-config install-code files-list
+
+install-config: $(CONFIG_OBJECTS) $(CONFIG_DIRS) $(CONFIG_FILES)
+install-code: $(CODE_OBJECTS) $(CODE_DIRS) $(CODE_FILES)
+
+$(DIRS):
+	@$(ING-MESSAGE) creat $@
+	${ATSIGN}\
+	install -m 0755 -d $@
+
+$(DESTDIR)$(PREFIX)/%: $(RELOC)/%
+	@ $(ING-MESSAGE) install $@
+	${ATSIGN}\
+        mode=0444; \
+	expr "`file -b $<`" : ".*executable" > /dev/null 2>&1 && mode=0555; \
+	install -m $$mode $< $@
+
+$(DESTDIR)/%: root/%
+	@ $(ING-MESSAGE) install $@
+	${ATSIGN}\
+        mode=0444; \
+	expr "`file -b $<`" : ".*executable" > /dev/null 2>&1 && mode=0555; \
+	install -m $$mode $< $@
+
+$(DESTDIR)/%: 
+	@$(ING-MESSAGE) creat $@
+	${ATSIGN}\
+	touch $@
+
+clobber:: clean
+	$(RM) $(CODE_OBJECTS)
+	$(RM) $(CONFIG_OBJECTS)
+
+echo-%:
+	@echo $($*)
+
+.force:
+
